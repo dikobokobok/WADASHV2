@@ -9,6 +9,22 @@
 
 ---
 
+## 📸 Screenshots
+
+### 🔐 Login Page
+![Login Page](./public/screenshots/login.png)
+
+### ☀️ Dashboard — Light Mode
+![Dashboard Light Mode](./public/screenshots/dashboard-light.png)
+
+### 🌙 Dashboard — Dark Mode
+![Dashboard Dark Mode](./public/screenshots/dashboard-dark.png)
+
+### ⚙️ Bot Configuration
+![Config Page](./public/screenshots/config.png)
+
+---
+
 ## ✨ Fitur Utama
 
 ### 🔐 Sistem Autentikasi
