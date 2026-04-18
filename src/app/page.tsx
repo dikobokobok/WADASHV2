@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfigForm from "@/components/ConfigForm";
@@ -234,6 +235,9 @@ export default function Dashboard() {
     const [loadingConfig, setLoadingConfig] = useState(false);
     const [saving, setSaving]             = useState(false);
     const [message, setMessage]           = useState("");
+    const [botStatus, setBotStatus]       = useState<'offline'|'connecting'|'online'>('offline');
+    const [qrDataUrl, setQrDataUrl]       = useState<string>('');
+    const [botLogs, setBotLogs]           = useState<string[]>([]);
 
     // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -277,7 +281,50 @@ export default function Dashboard() {
         if (activeTab === "config" && !configLoaded) fetchConfig();
     }, [activeTab, configLoaded, fetchConfig]);
 
+    // ── Bot Engine SSE ───────────────────────────────────────────────────────
+    useEffect(() => {
+        const evtSource = new EventSource('/api/engine/stream');
+        
+        evtSource.addEventListener('status', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                setBotStatus(data.status);
+                if (data.qrCode) {
+                    setQrDataUrl(data.qrCode);
+                } else {
+                    setQrDataUrl('');
+                }
+            } catch (error) {
+                console.error("SSE parse error", error);
+            }
+        });
+
+        evtSource.addEventListener('log', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.message) {
+                    setBotLogs(prev => [...prev, data.message].slice(-15));
+                }
+            } catch (error) {}
+        });
+        
+        // Ping handler to prevent connection from dropping
+        evtSource.addEventListener('ping', () => {});
+        
+        return () => evtSource.close();
+    }, []);
+
     // ── Handlers ─────────────────────────────────────────────────────────────
+
+    const handleBotAction = async (action: 'start' | 'stop' | 'delete') => {
+        try {
+            await fetch('/api/engine/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            });
+        } catch (error) {}
+    };
 
     const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -442,7 +489,13 @@ export default function Dashboard() {
                 {/* Tab content */}
                 <div key={activeTab} className="flex-1 page-enter">
                     {activeTab === "dashboard" && (
-                        <DashboardContent loadingUser={loadingUser} />
+                        <DashboardContent 
+                            loadingUser={loadingUser} 
+                            botStatus={botStatus} 
+                            qrDataUrl={qrDataUrl} 
+                            botLogs={botLogs}
+                            handleBotAction={handleBotAction} 
+                        />
                     )}
                     {activeTab === "config" && (
                         loadingConfig
@@ -465,7 +518,7 @@ export default function Dashboard() {
 
 // ─── Dashboard tab content ────────────────────────────────────────────────────
 
-function DashboardContent({ loadingUser }: { loadingUser: boolean }) {
+function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, handleBotAction }: { loadingUser: boolean, botStatus: string, qrDataUrl: string, botLogs: string[], handleBotAction: (action: any) => void }) {
     return (
         <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl">
 
@@ -497,8 +550,8 @@ function DashboardContent({ loadingUser }: { loadingUser: boolean }) {
 
             {/* Logs + Control panel */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <BotLogsCard />
-                <ControlPanelCard />
+                <BotLogsCard botLogs={botLogs} />
+                <ControlPanelCard botStatus={botStatus} qrDataUrl={qrDataUrl} handleBotAction={handleBotAction} />
             </div>
 
             {/* Quick links */}
@@ -541,7 +594,7 @@ function StatCardItem({ card }: { card: StatCard }) {
     );
 }
 
-function BotLogsCard() {
+function BotLogsCard({ botLogs }: { botLogs: string[] }) {
     return (
         <Card className="lg:col-span-2 border-0 shadow-sm">
             <CardContent className="p-5">
@@ -554,7 +607,7 @@ function BotLogsCard() {
                             <p className="text-sm font-semibold text-foreground">Bot Logs</p>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-slate-400" />
-                                <p className="text-[11px] text-muted-foreground">Not connected</p>
+                                <p className="text-[11px] text-muted-foreground">{botLogs.length > 0 ? "Live logs incoming..." : "Waiting for logs"}</p>
                             </div>
                         </div>
                     </div>
@@ -563,50 +616,84 @@ function BotLogsCard() {
                     </span>
                 </div>
 
-                <div className="h-36 rounded-xl border flex flex-col items-center justify-center gap-2 bg-violet-50 dark:bg-slate-950 border-violet-200 dark:border-slate-800">
-                    <Terminal className="w-5 h-5 text-violet-300 dark:text-slate-600" />
-                    <p className="text-xs font-mono text-violet-400 dark:text-slate-500">No logs available</p>
+                <div className="h-44 rounded-xl border flex flex-col p-3 gap-1 bg-violet-50 dark:bg-slate-950 border-violet-200 dark:border-slate-800 overflow-y-auto">
+                    {botLogs.length === 0 ? (
+                        <div className="flex items-center justify-center flex-col h-full gap-2 opacity-70">
+                            <Terminal className="w-5 h-5 text-violet-300 dark:text-slate-600" />
+                            <p className="text-xs font-mono text-violet-400 dark:text-slate-500">No logs available</p>
+                        </div>
+                    ) : (
+                        botLogs.map((log, idx) => (
+                            <p key={idx} className="text-[11px] font-mono whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+                                <span className="text-violet-500 dark:text-violet-400">&gt;</span> {log}
+                            </p>
+                        ))
+                    )}
                 </div>
             </CardContent>
         </Card>
     );
 }
 
-function ControlPanelCard() {
+function ControlPanelCard({ botStatus, qrDataUrl, handleBotAction }: { botStatus: string, qrDataUrl: string, handleBotAction: (action: any) => void }) {
     return (
-        <Card className="lg:col-span-1 border-0 shadow-sm overflow-hidden">
-            <CardContent className="p-5">
+        <Card className="lg:col-span-1 border-0 shadow-sm overflow-hidden flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-5 h-5 rounded-md bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
                         <Settings className="w-3 h-3 text-violet-500 dark:text-violet-400" />
                     </div>
                     <p className="text-sm font-semibold text-foreground">Control</p>
+                    <span className="w-2 h-2 ml-auto rounded-full mt-1" style={{ backgroundColor: botStatus === 'online' ? '#10b981' : botStatus === 'connecting' ? '#f59e0b' : '#ef4444' }} />
                 </div>
 
                 {/* Tab-style button group */}
                 <div className="flex items-center rounded-lg bg-gray-100 dark:bg-slate-800 p-0.5 gap-0.5">
-                    {/* Start Bot — active */}
-                    <button className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-violet-600 dark:bg-slate-600 text-white text-xs font-semibold shadow-sm transition-all duration-150 hover:bg-violet-700 dark:hover:bg-slate-500">
+                    {/* Start Bot */}
+                    <button onClick={() => handleBotAction('start')} disabled={botStatus !== 'offline'} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition-all duration-150 ${botStatus === 'offline' ? 'bg-violet-600 dark:bg-slate-600 text-white hover:bg-violet-700 dark:hover:bg-slate-500' : 'text-gray-400 bg-transparent cursor-not-allowed'}`}>
                         <Play className="w-3 h-3 fill-current" />
-                        Start Bot
+                        Start
                     </button>
 
-                    {/* Stop Bot — inactive */}
-                    <button className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-gray-500 dark:text-slate-400 text-xs font-medium transition-all duration-150 hover:text-gray-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700">
+                    {/* Stop Bot */}
+                    <button onClick={() => handleBotAction('stop')} disabled={botStatus === 'offline'} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${botStatus !== 'offline' ? 'text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm' : 'text-gray-400 bg-transparent cursor-not-allowed'}`}>
                         <Square className="w-3 h-3 fill-current" />
-                        Stop Bot
+                        Stop
                     </button>
 
-                    {/* Delete — inactive */}
-                    <button className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-gray-500 dark:text-slate-400 text-xs font-medium transition-all duration-150 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">
+                    {/* Delete */}
+                    <button onClick={() => handleBotAction('delete')} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-gray-500 dark:text-slate-400 text-xs font-medium transition-all duration-150 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">
                         <Trash2 className="w-3 h-3" />
-                        Delete
+                        Del
                     </button>
                 </div>
 
-                {/* Status */}
-                <p className="text-xs text-muted-foreground text-center mt-4">Bot is currently offline</p>
+                {/* Status Body */}
+                <div className="flex-1 flex flex-col items-center justify-center mt-6">
+                    {botStatus === 'connecting' && qrDataUrl ? (
+                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                            <div className="bg-white p-2 rounded-xl shadow-sm border mb-3">
+                                <img src={qrDataUrl} alt="WhatsApp QR Code" className="w-36 h-36 border border-gray-100 rounded-md" />
+                            </div>
+                            <p className="text-xs text-muted-foreground animate-pulse text-center">Scan QR Code with WhatsApp</p>
+                        </div>
+                    ) : botStatus === 'connecting' ? (
+                        <div className="flex flex-col items-center opacity-50 animate-pulse">
+                            <div className="w-16 h-16 rounded-xl border-4 border-slate-200 border-t-violet-500 animate-spin mb-3 text-center grid place-items-center"><span className="opacity-0">.</span></div>
+                            <p className="text-xs text-muted-foreground text-center">Connecting to Engine...</p>
+                        </div>
+                    ) : botStatus === 'online' ? (
+                        <div className="flex flex-col items-center animate-in slide-in-from-bottom-2 fade-in duration-300">
+                            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 shadow-inner shadow-emerald-500/20">
+                                <Power className="w-8 h-8 text-emerald-500 drop-shadow-md" />
+                            </div>
+                            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 text-center">Bot is Online</p>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-muted-foreground text-center">Bot is currently offline</p>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );

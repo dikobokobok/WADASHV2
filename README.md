@@ -80,6 +80,12 @@
 - Status feedback (success / error) setelah save
 - Tombol Save dengan gradient violet
 
+### 🤖 Bot Engine & Real-Time Sync (Baru!)
+- **Baileys WhatsApp Web API** terintegrasi secara modular running-in-process
+- **Real-Time Log Streaming via SSE** (Server-Sent Events) untuk streaming terminal log ke dashboard GUI
+- **Session Isolation** dengan Multi-Tenant `uuid` folder management
+- **Anti-Flagging Mechanism** menggunakan dynamic version fetcher & standard browser signature
+
 ### ⚡ Performa
 - **Lazy config loading** — konfigurasi bot hanya di-fetch saat tab Config dibuka
 - **Config caching** — tidak re-fetch saat bolak-balik tab (menggunakan `configLoaded` flag)
@@ -92,12 +98,12 @@
 - Semua data statis sebagai typed constants (`NAV_ITEMS`, `STAT_CARDS`, `QUICK_LINKS`)
 - Props-drilling minimal dengan interface TypeScript yang eksplisit
 - `import type` untuk type-only imports
-- `parseInt` dengan radix 10
-- Komentar section divider untuk keterbacaan
+- Singleton pattern management untuk menghandle koneksi WhatsApp Multi-Device saat Hot Module Reloading (HMR)
 
 ### 💾 Database
 - File-based JSON database (`database/database.json`)
 - Per-user configuration storage
+- Per-user WhatsApp Session credentials (isolated folder `database/sessions/{uuid}/`)
 - Default configuration untuk user baru
 - Easy backup dan migration
 
@@ -147,6 +153,7 @@ WADASHV2/
 │   │   ├── api/
 │   │   │   ├── auth/             # Login, Register, Logout
 │   │   │   ├── config/           # Get & Update bot config
+│   │   │   ├── engine/           # Bot Engine Control (Start/Stop) & SSE
 │   │   │   └── user/             # Get user data
 │   │   ├── login/                # Halaman login
 │   │   ├── register/             # Halaman register
@@ -157,11 +164,14 @@ WADASHV2/
 │   │   ├── ConfigForm.tsx        # Form konfigurasi bot
 │   │   ├── ThemeProvider.tsx     # Context provider dark/light mode
 │   │   └── ThemeToggle.tsx       # Tombol toggle tema
+│   ├── engine/
+│   │   └── BotManager.ts         # Singleton WhatsApp Baileys Instance Manager
 │   └── lib/
 │       ├── auth.ts               # Helper autentikasi & cookie
 │       ├── database.ts           # Operasi baca/tulis database
 │       └── utils.ts              # Utilitas umum
 ├── database/
+│   ├── sessions/                 # Local directory multi-device Baileys Auth credentials
 │   └── database.json             # Penyimpanan user & konfigurasi
 └── public/                       # Static assets
 ```
@@ -176,6 +186,7 @@ WADASHV2/
 | Language       | TypeScript 5                     |
 | Styling        | Tailwind CSS 3                   |
 | UI Components  | shadcn/ui + Radix UI             |
+| Core Engine    | Baileys (@whiskeysockets/baileys)|
 | Icons          | Lucide React                     |
 | Database       | File-based JSON (flat-file)      |
 | Authentication | Cookie-based sessions (HTTP-only)|
@@ -192,14 +203,16 @@ WADASHV2/
 | POST   | `/api/auth/login`     | Login user          |
 | POST   | `/api/auth/logout`    | Logout user         |
 
-### User
-| Method | Endpoint    | Deskripsi                       |
-|--------|-------------|---------------------------------|
-| GET    | `/api/user` | Ambil data user (authenticated) |
+### Bot Engine Control
+| Method | Endpoint                 | Deskripsi                                    |
+|--------|--------------------------|----------------------------------------------|
+| GET    | `/api/engine/stream`     | Server-Sent Events (SSE) Stream untuk status |
+| POST   | `/api/engine/action`     | Mengontrol Bot (start, stop, delete)         |
 
-### Configuration
+### User & Configuration
 | Method | Endpoint      | Deskripsi                                |
 |--------|---------------|------------------------------------------|
+| GET    | `/api/user`   | Ambil data user (authenticated)          |
 | GET    | `/api/config` | Ambil konfigurasi bot (authenticated)    |
 | POST   | `/api/config` | Update konfigurasi bot (authenticated)   |
 
@@ -253,11 +266,9 @@ WADASHV2 mendukung dark mode dan light mode sepenuhnya:
 ## 🚧 Roadmap
 
 - [ ] Password hashing dengan bcrypt
-- [ ] Real-time bot status via WebSocket
-- [ ] Live log streaming
-- [ ] Multi-bot support
+- [ ] Multi-bot support scaling
 - [ ] Advanced analytics dashboard
-- [ ] API key management
+- [ ] Plugin Command System dinamis (Menerima input JS Files)
 - [ ] Webhook integration
 - [ ] Export / Import konfigurasi
 - [ ] Migrasi database ke Supabase (PostgreSQL)
