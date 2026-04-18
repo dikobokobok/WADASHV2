@@ -72,25 +72,25 @@ const DEFAULT_CONFIG: BotConfig = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", icon: Home,       tab: "dashboard" },
-    { label: "Pricing",   icon: CreditCard  },
-    { label: "FAQ's",     icon: HelpCircle  },
-    { label: "Changelog", icon: RotateCcw   },
+    { label: "Dashboard", icon: Home, tab: "dashboard" },
+    { label: "Pricing", icon: CreditCard },
+    { label: "FAQ's", icon: HelpCircle },
+    { label: "Changelog", icon: RotateCcw },
 ];
 
 const BOT_NAV_ITEMS: NavItem[] = [
-    { label: "Config",         icon: Wrench,    tab: "config" },
-    { label: "Messages",       icon: Inbox      },
-    { label: "Commands",       icon: Info       },
-    { label: "Filter Command", icon: Filter     },
-    { label: "Menu",           icon: Edit       },
-    { label: "Catalog",        icon: ShoppingBag},
+    { label: "Config", icon: Wrench, tab: "config" },
+    { label: "Messages", icon: Inbox },
+    { label: "Commands", icon: Info },
+    { label: "Filter Command", icon: Filter },
+    { label: "Menu", icon: Edit },
+    { label: "Catalog", icon: ShoppingBag },
 ];
 
 const USER_NAV_ITEMS: NavItem[] = [
-    { label: "Settings",  icon: Settings  },
-    { label: "Invoice",   icon: FileText  },
-    { label: "Affiliate", icon: Users     },
+    { label: "Settings", icon: Settings },
+    { label: "Invoice", icon: FileText },
+    { label: "Affiliate", icon: Users },
 ];
 
 const STAT_CARDS: StatCard[] = [
@@ -133,10 +133,10 @@ const STAT_CARDS: StatCard[] = [
 ];
 
 const QUICK_LINKS: QuickLink[] = [
-    { label: "Commands",  icon: Info,        color: "text-blue-500",    bg: "bg-blue-50    dark:bg-blue-950/40"    },
-    { label: "Catalog",   icon: ShoppingBag, color: "text-amber-500",   bg: "bg-amber-50   dark:bg-amber-950/40"   },
-    { label: "Affiliate", icon: UserPlus,    color: "text-violet-500",  bg: "bg-violet-50  dark:bg-violet-950/40"  },
-    { label: "Invoice",   icon: FileText,    color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+    { label: "Commands", icon: Info, color: "text-blue-500", bg: "bg-blue-50    dark:bg-blue-950/40" },
+    { label: "Catalog", icon: ShoppingBag, color: "text-amber-500", bg: "bg-amber-50   dark:bg-amber-950/40" },
+    { label: "Affiliate", icon: UserPlus, color: "text-violet-500", bg: "bg-violet-50  dark:bg-violet-950/40" },
+    { label: "Invoice", icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -226,18 +226,19 @@ function ConfigSkeleton() {
 export default function Dashboard() {
     const router = useRouter();
 
-    const [username, setUsername]         = useState("User");
-    const [activeTab, setActiveTab]       = useState<Tab>("dashboard");
+    const [username, setUsername] = useState("User");
+    const [activeTab, setActiveTab] = useState<Tab>("dashboard");
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [config, setConfig]             = useState<BotConfig>(DEFAULT_CONFIG);
+    const [config, setConfig] = useState<BotConfig>(DEFAULT_CONFIG);
     const [configLoaded, setConfigLoaded] = useState(false);
-    const [loadingUser, setLoadingUser]   = useState(true);
+    const [loadingUser, setLoadingUser] = useState(true);
     const [loadingConfig, setLoadingConfig] = useState(false);
-    const [saving, setSaving]             = useState(false);
-    const [message, setMessage]           = useState("");
-    const [botStatus, setBotStatus]       = useState<'offline'|'connecting'|'online'>('offline');
-    const [qrDataUrl, setQrDataUrl]       = useState<string>('');
-    const [botLogs, setBotLogs]           = useState<string[]>([]);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [botStatus, setBotStatus] = useState<'offline' | 'connecting' | 'online'>('offline');
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
+    const [botLogs, setBotLogs] = useState<string[]>([]);
+    const [botOnlineAt, setBotOnlineAt] = useState<number | undefined>(undefined);
 
     // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -284,11 +285,12 @@ export default function Dashboard() {
     // ── Bot Engine SSE ───────────────────────────────────────────────────────
     useEffect(() => {
         const evtSource = new EventSource('/api/engine/stream');
-        
+
         evtSource.addEventListener('status', (e) => {
             try {
                 const data = JSON.parse(e.data);
                 setBotStatus(data.status);
+                setBotOnlineAt(data.onlineAt);
                 if (data.qrCode) {
                     setQrDataUrl(data.qrCode);
                 } else {
@@ -305,12 +307,12 @@ export default function Dashboard() {
                 if (data.message) {
                     setBotLogs(prev => [...prev, data.message].slice(-15));
                 }
-            } catch (error) {}
+            } catch (error) { }
         });
-        
+
         // Ping handler to prevent connection from dropping
-        evtSource.addEventListener('ping', () => {});
-        
+        evtSource.addEventListener('ping', () => { });
+
         return () => evtSource.close();
     }, []);
 
@@ -323,7 +325,7 @@ export default function Dashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action })
             });
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleSaveConfig = async (e: React.FormEvent) => {
@@ -410,7 +412,7 @@ export default function Dashboard() {
                             onClick={() => { if (item.tab) setActiveTab(item.tab); closeMobileMenu(); }}
                         />
                     ))}
-                    <NavSection title="Bot"  items={BOT_NAV_ITEMS}  activeTab={activeTab} onTabChange={setActiveTab} onClose={closeMobileMenu} />
+                    <NavSection title="Bot" items={BOT_NAV_ITEMS} activeTab={activeTab} onTabChange={setActiveTab} onClose={closeMobileMenu} />
                     <NavSection title="User" items={USER_NAV_ITEMS} activeTab={activeTab} onTabChange={setActiveTab} onClose={closeMobileMenu} />
                 </nav>
 
@@ -489,12 +491,13 @@ export default function Dashboard() {
                 {/* Tab content */}
                 <div key={activeTab} className="flex-1 page-enter">
                     {activeTab === "dashboard" && (
-                        <DashboardContent 
-                            loadingUser={loadingUser} 
-                            botStatus={botStatus} 
-                            qrDataUrl={qrDataUrl} 
+                        <DashboardContent
+                            loadingUser={loadingUser}
+                            botStatus={botStatus}
+                            qrDataUrl={qrDataUrl}
                             botLogs={botLogs}
-                            handleBotAction={handleBotAction} 
+                            botOnlineAt={botOnlineAt}
+                            handleBotAction={handleBotAction}
                         />
                     )}
                     {activeTab === "config" && (
@@ -518,7 +521,25 @@ export default function Dashboard() {
 
 // ─── Dashboard tab content ────────────────────────────────────────────────────
 
-function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, handleBotAction }: { loadingUser: boolean, botStatus: string, qrDataUrl: string, botLogs: string[], handleBotAction: (action: any) => void }) {
+function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, botOnlineAt, handleBotAction }: { loadingUser: boolean, botStatus: string, qrDataUrl: string, botLogs: string[], botOnlineAt?: number, handleBotAction: (action: any) => void }) {
+    const [uptimeString, setUptimeString] = useState<string>("00:00:00");
+
+    useEffect(() => {
+        if (!botOnlineAt) {
+            setUptimeString("00:00:00");
+            return;
+        }
+        const interval = setInterval(() => {
+            const diff = Math.floor((Date.now() - botOnlineAt) / 1000);
+            const hh = String(Math.floor(diff / 3600)).padStart(2, "0");
+            const mm = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
+            const ss = String(diff % 60).padStart(2, "0");
+            setUptimeString(`${hh}:${mm}:${ss}`);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [botOnlineAt]);
+
     return (
         <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl">
 
@@ -544,7 +565,45 @@ function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, handleBo
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {loadingUser
                     ? Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} />)
-                    : STAT_CARDS.map((card) => <StatCardItem key={card.label} card={card} />)
+                    : STAT_CARDS.map((card) => {
+                        let currentCard = { ...card };
+                        if (card.label === "Bot Status") {
+                            if (botStatus === "online") {
+                                currentCard.value = "Online";
+                                currentCard.sub = "Live";
+                                currentCard.iconBg = "bg-emerald-50 dark:bg-emerald-950/40";
+                                currentCard.iconColor = "text-emerald-500";
+                                currentCard.dot = "bg-emerald-400";
+                            } else if (botStatus === "connecting") {
+                                currentCard.value = "Connecting...";
+                                currentCard.sub = "Handshake in progress";
+                                currentCard.iconBg = "bg-amber-50 dark:bg-amber-950/40";
+                                currentCard.iconColor = "text-amber-500";
+                                currentCard.dot = "bg-amber-400 animate-pulse";
+                            } else {
+                                currentCard.value = "Offline";
+                                currentCard.sub = "Disconnected";
+                                currentCard.iconBg = "bg-slate-100 dark:bg-slate-800 text-slate-500";
+                                currentCard.iconColor = "text-slate-500";
+                                currentCard.dot = "bg-slate-400";
+                            }
+                        } else if (card.label === "Runtime") {
+                            if (botOnlineAt && botStatus === "online") {
+                                currentCard.value = uptimeString;
+                                currentCard.sub = "Bot is actively running";
+                                currentCard.iconBg = "bg-emerald-50 dark:bg-emerald-950/40";
+                                currentCard.iconColor = "text-emerald-500";
+                                currentCard.dot = "bg-emerald-400 animate-pulse";
+                            } else {
+                                currentCard.value = "00:00:00";
+                                currentCard.sub = "Uptime tracking paused";
+                                currentCard.iconBg = "bg-slate-100 dark:bg-slate-800 text-slate-500";
+                                currentCard.iconColor = "text-slate-500";
+                                currentCard.dot = "bg-slate-400";
+                            }
+                        }
+                        return <StatCardItem key={currentCard.label} card={currentCard} />
+                    })
                 }
             </div>
 

@@ -16,6 +16,7 @@ export interface BotState {
     status: BotStatus;
     qrCode?: string;
     lastError?: string;
+    onlineAt?: number;
 }
 
 const DATABASE_DIR = path.join(process.cwd(), 'database');
@@ -45,9 +46,9 @@ export class BotManager extends EventEmitter {
 
         this.intentionalStops.delete(uuid);
         const sessionFolder = path.join(SESSIONS_DIR, uuid);
-        
+
         // Update status map
-        this.updateStatus(uuid, { status: 'connecting', qrCode: undefined, lastError: undefined });
+        this.updateStatus(uuid, { status: 'connecting', qrCode: undefined, lastError: undefined, onlineAt: undefined });
 
         try {
             const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
@@ -76,9 +77,9 @@ export class BotManager extends EventEmitter {
                         // Emit QR code to the dashboard
                         this.updateStatus(uuid, { status: 'connecting', qrCode: qrDataUrl });
                     } catch (e) {
-                         this.updateStatus(uuid, { status: 'connecting', qrCode: qr });
+                        this.updateStatus(uuid, { status: 'connecting', qrCode: qr });
                     }
-                    
+
                     // Also print to terminal for development (without 'small' parameter to prevent formatting issues in PowerShell)
                     console.log(`\n\n------- QR Code for User ${uuid} -------`);
                     qrcodeTerminal.generate(qr);
@@ -90,13 +91,13 @@ export class BotManager extends EventEmitter {
                     const isManualStop = this.intentionalStops.has(uuid);
                     const isLoggedOut = (lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.loggedOut;
                     const shouldReconnect = !isManualStop && !isLoggedOut;
-                    
+
                     console.log(`Connection closed for ${uuid}. Reconnecting: ${shouldReconnect} (Manual: ${isManualStop})`);
                     this.pushLog(uuid, `Connection drop detected. Reconnecting: ${shouldReconnect}`);
-                    
-                    this.updateStatus(uuid, { status: 'offline' });
+
+                    this.updateStatus(uuid, { status: 'offline', onlineAt: undefined });
                     this.bots.delete(uuid);
-                    
+
                     if (shouldReconnect) {
                         // try to auto-reconnect
                         setTimeout(() => {
@@ -114,7 +115,7 @@ export class BotManager extends EventEmitter {
                 } else if (connection === 'open') {
                     console.log(`Bot connected for ${uuid}!`);
                     this.pushLog(uuid, 'WebSocket attached and Handshake succeeded!');
-                    this.updateStatus(uuid, { status: 'online', qrCode: undefined });
+                    this.updateStatus(uuid, { status: 'online', qrCode: undefined, onlineAt: Date.now() });
                 }
             });
 
@@ -131,7 +132,7 @@ export class BotManager extends EventEmitter {
         } catch (error: any) {
             console.error(`Error starting bot for ${uuid}:`, error);
             this.pushLog(uuid, `Fatal startup error: ${error.message}`);
-            this.updateStatus(uuid, { status: 'offline', lastError: error.message });
+            this.updateStatus(uuid, { status: 'offline', lastError: error.message, onlineAt: undefined });
             this.bots.delete(uuid);
         }
     }
@@ -147,7 +148,7 @@ export class BotManager extends EventEmitter {
                 this.deleteSessionFolder(uuid);
             }
             this.bots.delete(uuid);
-            this.updateStatus(uuid, { status: 'offline', qrCode: undefined });
+            this.updateStatus(uuid, { status: 'offline', qrCode: undefined, onlineAt: undefined });
             console.log(`Bot for ${uuid} intentionally stopped.`);
             this.pushLog(uuid, 'Process fully stopped.');
         }
@@ -170,7 +171,7 @@ export class BotManager extends EventEmitter {
     private updateStatus(uuid: string, status: BotState) {
         this.statuses.set(uuid, status);
         this.emit('status-update', { uuid, status });
-        
+
         // Also push a log about status changes
         this.pushLog(uuid, `Status changed to: ${status.status.toUpperCase()}`);
     }
@@ -189,17 +190,17 @@ export class BotManager extends EventEmitter {
         if (fs.existsSync(settingsPath)) {
             try {
                 settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-            } catch (err) {}
+            } catch (err) { }
         }
 
         const prefix = settings.prefix || '#';
         // Extract text message content
         const textMessage = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
-        
+
         if (textMessage.startsWith(prefix)) {
             // Process command (sample logic)
             const command = textMessage.slice(prefix.length).trim().split(' ')[0];
-            
+
             if (command === 'ping') {
                 sock.sendMessage(msg.key.remoteJid!, { text: 'Pong! 🏓 WADASH Engine works!' });
             }
