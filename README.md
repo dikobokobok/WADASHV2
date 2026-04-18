@@ -2,7 +2,7 @@
 
 **WADASH V2** adalah dashboard modern untuk mengelola WhatsApp Bot dengan antarmuka yang elegan, bersih, dan profesional. Dibangun menggunakan Next.js 15 dengan TypeScript dan Tailwind CSS.
 
-![Version](https://img.shields.io/badge/version-2.3-violet)
+![Version](https://img.shields.io/badge/version-2.3.1-violet)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -43,6 +43,7 @@
 - **Micro-animations** — hover scale, translate, dan shadow pada elemen interaktif
 - **Font Inter** — tipografi modern dari Google Fonts
 - **CSS Variables** — sistem token warna konsisten untuk light & dark mode
+- **Dynamic Observability (v2.3.1)** — Live terminal logs dan Real-time Uptime counter (HH:MM:SS) yang berjalan otomatis saat bot online.
 
 ### 🧭 Sidebar Navigation
 - Sidebar fixed 240px dengan scroll navigasi vertikal
