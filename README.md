@@ -2,7 +2,7 @@
 
 **WADASH V2** adalah dashboard modern untuk mengelola WhatsApp Bot dengan antarmuka yang elegan, bersih, dan profesional. Dibangun menggunakan Next.js 15 dengan TypeScript dan Tailwind CSS.
 
-![Version](https://img.shields.io/badge/version-2.2-violet)
+![Version](https://img.shields.io/badge/version-2.3-violet)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -34,7 +34,7 @@
 - Auto-redirect untuk session yang tidak valid atau expired
 - Middleware proteksi untuk semua route dashboard
 
-### 🎨 UI/UX Modern (v2.2)
+### 🎨 UI/UX Modern (v2.3)
 - **Dark Mode & Light Mode** — full theme support dengan toggle smooth, persisten via localStorage
 - **Responsive Design** — optimal di semua perangkat (mobile, tablet, desktop)
 - **Glassmorphism Header** — efek blur + transparansi pada header sticky
@@ -93,7 +93,7 @@
 - **useCallback** — fungsi fetch di-memoize untuk menghindari re-render tidak perlu
 - **Turbopack** — development server lebih cepat dengan `--turbopack`
 
-### 🧹 Code Quality (v2.2)
+### 🧹 Code Quality (v2.3)
 - Arsitektur modular: komponen kecil dan fokus (`SidebarButton`, `NavSection`, `StatCardItem`, `BotLogsCard`, `ControlPanelCard`, `DashboardContent`, dst.)
 - Semua data statis sebagai typed constants (`NAV_ITEMS`, `STAT_CARDS`, `QUICK_LINKS`)
 - Props-drilling minimal dengan interface TypeScript yang eksplisit
@@ -299,7 +299,7 @@ MIT License — bebas digunakan untuk keperluan personal maupun komersial.
 
 ---
 
-**Version:** 2.2  
-**Last Updated:** April 19, 2025
+**Version:** 2.3  
+**Last Updated:** April 19, 2026
 
 Made with ❤️ by dikobokobok
