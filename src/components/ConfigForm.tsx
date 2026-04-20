@@ -357,6 +357,12 @@ export default function ConfigForm({
                                 description="Require users to join group before using bot"
                                 onChange={(v) => update({ joinToUse: v })}
                             />
+                            <ToggleSwitch
+                                checked={config.autoRead || false}
+                                label="Auto Read"
+                                description="Automatically mark incoming messages as read"
+                                onChange={(v) => update({ autoRead: v })}
+                            />
                         </div>
                     </Section>
 

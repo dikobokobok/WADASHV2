@@ -44,6 +44,8 @@ export interface BotConfig { // Mapped to {uuid}.settings.json
     sewaNotificationToGroup: boolean;
     sewaNotificationToOwner: boolean;
     joinToUse: boolean;
+    autoRead: boolean;
+    menuTemplate: string;
 }
 
 export interface BotOperationalData { // Mapped to {uuid}.bot.json
@@ -70,6 +72,8 @@ const defaultBotConfig: BotConfig = {
     sewaNotificationToGroup: false,
     sewaNotificationToOwner: false,
     joinToUse: false,
+    autoRead: false,
+    menuTemplate: "halo {user.bot}🙌🏻\n\nWELCOME TO {name.bot}\n> Name BOT : {name.bot}\n> Uptime : {uptime}\n> Jam : {time}\n> Tanggal : {date}\n> Prefix : {action.prefix}\n\nList Bot :\n{action.prefix}{all fitur}\n\nList Bot by Kategori :\ndownload : \n{action.prefix}{kategori.download}\nsticker :\n{action.prefix}{kategori.sticker}\nowner :\n{action.prefix}{kategori.owner}"
 };
 
 const defaultBotData: BotOperationalData = {

@@ -14,6 +14,7 @@ import QRCode from "qrcode";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfigForm from "@/components/ConfigForm";
+import MenuForm from "@/components/MenuForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
     Home, CreditCard, HelpCircle, RotateCcw, Wrench,
@@ -26,7 +27,7 @@ import type { BotConfig } from "@/lib/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "config";
+type Tab = "dashboard" | "config" | "menu";
 
 interface NavItem {
     label: string;
@@ -83,7 +84,7 @@ const BOT_NAV_ITEMS: NavItem[] = [
     { label: "Messages", icon: Inbox },
     { label: "Commands", icon: Info },
     { label: "Filter Command", icon: Filter },
-    { label: "Menu", icon: Edit },
+    { label: "Menu", icon: Edit, tab: "menu" },
     { label: "Catalog", icon: ShoppingBag },
 ];
 
@@ -279,7 +280,7 @@ export default function Dashboard() {
     useEffect(() => { fetchUserData(); }, [fetchUserData]);
 
     useEffect(() => {
-        if (activeTab === "config" && !configLoaded) fetchConfig();
+        if ((activeTab === "config" || activeTab === "menu") && !configLoaded) fetchConfig();
     }, [activeTab, configLoaded, fetchConfig]);
 
     // ── Bot Engine SSE ───────────────────────────────────────────────────────
@@ -505,6 +506,19 @@ export default function Dashboard() {
                             ? <ConfigSkeleton />
                             : (
                                 <ConfigForm
+                                    config={config}
+                                    setConfig={setConfig}
+                                    handleSubmit={handleSaveConfig}
+                                    saving={saving}
+                                    message={message}
+                                />
+                            )
+                    )}
+                    {activeTab === "menu" && (
+                        loadingConfig
+                            ? <ConfigSkeleton />
+                            : (
+                                <MenuForm
                                     config={config}
                                     setConfig={setConfig}
                                     handleSubmit={handleSaveConfig}

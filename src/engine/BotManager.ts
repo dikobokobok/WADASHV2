@@ -183,7 +183,7 @@ export class BotManager extends EventEmitter {
         }
     }
 
-    private handleIncomingMessage(uuid: string, sock: ReturnType<typeof makeWASocket>, msg: WAMessage) {
+    private async handleIncomingMessage(uuid: string, sock: ReturnType<typeof makeWASocket>, msg: WAMessage) {
         // Read {uuid}.settings.json dynamically
         const settingsPath = path.join(DATABASE_DIR, `${uuid}.settings.json`);
         let settings: any = {};
@@ -193,16 +193,90 @@ export class BotManager extends EventEmitter {
             } catch (err) { }
         }
 
-        const prefix = settings.prefix || '#';
-        // Extract text message content
+        const prefixType = settings.prefixType || 'single';
+        const definedPrefix = settings.prefix || '#';
         const textMessage = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
 
-        if (textMessage.startsWith(prefix)) {
-            // Process command (sample logic)
-            const command = textMessage.slice(prefix.length).trim().split(' ')[0];
+        // Auto Read Logic
+        if (settings.autoRead) {
+            try {
+                await sock.readMessages([msg.key]);
+            } catch (err) { }
+        }
 
+        let isCommand = false;
+        let command = "";
+        let usedPrefix = "";
+
+        // Determine if it's a command based on prefixType
+        if (prefixType === 'single') {
+            if (textMessage.startsWith(definedPrefix)) {
+                isCommand = true;
+                usedPrefix = definedPrefix;
+                command = textMessage.slice(definedPrefix.length).trim().split(' ')[0].toLowerCase();
+            }
+        } else if (prefixType === 'multi') {
+            const multiPrefixRegex = /^[./!#]/;
+            if (multiPrefixRegex.test(textMessage)) {
+                isCommand = true;
+                usedPrefix = textMessage[0];
+                command = textMessage.slice(1).trim().split(' ')[0].toLowerCase();
+            }
+        } else if (prefixType === 'empty') {
+            isCommand = true;
+            usedPrefix = "";
+            command = textMessage.trim().split(' ')[0].toLowerCase();
+        }
+
+        if (isCommand && command) {
             if (command === 'ping') {
                 sock.sendMessage(msg.key.remoteJid!, { text: 'Pong! 🏓 WADASH Engine works!' });
+            } else if (command === 'owner') {
+                const ownerName = settings.ownerName || "Admin";
+                const ownerNumber = settings.ownerNumber || "628989031500";
+
+                const vcard = 'BEGIN:VCARD\n'
+                    + 'VERSION:3.0\n'
+                    + `FN:${ownerName}\n`
+                    + `TEL;type=CELL;type=VOICE;waid=${ownerNumber}:${ownerNumber}\n`
+                    + 'END:VCARD';
+
+                await sock.sendMessage(msg.key.remoteJid!, {
+                    contacts: {
+                        displayName: ownerName,
+                        contacts: [{ vcard }]
+                    }
+                });
+            } else if (command === 'menu') {
+                const rawMenu = settings.menuTemplate || "Menu template not set in dashboard.";
+
+                // Format Uptime
+                const onlineAt = this.statuses.get(uuid)?.onlineAt || Date.now();
+                const uptimeMs = Date.now() - onlineAt;
+                const hh = String(Math.floor(uptimeMs / 3600000)).padStart(2, "0");
+                const mm = String(Math.floor((uptimeMs % 3600000) / 60000)).padStart(2, "0");
+                const ss = String(Math.floor((uptimeMs % 60000) / 1000)).padStart(2, "0");
+                const uptimeStr = `${hh}:${mm}:${ss}`;
+
+                // Format Time and Date
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
+                const dateStr = now.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+                // Format the menu response
+                const responseText = rawMenu
+                    .replace(/{user\.bot}/g, msg.pushName || "User")
+                    .replace(/{name\.bot}/g, settings.botName || "WADASH Bot")
+                    .replace(/{uptime}/g, uptimeStr)
+                    .replace(/{time}/g, timeStr)
+                    .replace(/{date}/g, dateStr)
+                    .replace(/{action\.prefix}/g, usedPrefix || definedPrefix)
+                    .replace(/{all fitur}/g, "\n- ping\n- menu\n- sticker\n- exec")
+                    .replace(/{kategori\.download}/g, "\n- tiktok\n- instagram")
+                    .replace(/{kategori\.sticker}/g, "\n- sticker\n- take")
+                    .replace(/{kategori\.owner}/g, "\n- eval\n- exec\n- restart");
+
+                sock.sendMessage(msg.key.remoteJid!, { text: responseText });
             }
         }
     }
