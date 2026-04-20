@@ -2,7 +2,7 @@
 
 **WADASH V2** adalah dashboard modern untuk mengelola WhatsApp Bot dengan antarmuka yang elegan, bersih, dan profesional. Dibangun menggunakan Next.js 15 dengan TypeScript dan Tailwind CSS.
 
-![Version](https://img.shields.io/badge/version-2.3.1-violet)
+![Version](https://img.shields.io/badge/version-2.4.0-violet)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -25,88 +25,40 @@
 
 ---
 
-## ✨ Fitur Utama
+## 📝 Changelog (Update Terbaru v2.4.0)
 
-### 🔐 Sistem Autentikasi
-- Login & Register dengan validasi form
-- Login menggunakan **username atau email**
-- Session management dengan HTTP-only cookies
-- Auto-redirect untuk session yang tidak valid atau expired
-- Middleware proteksi untuk semua route dashboard
+- **Bot API Responders**: Integrasi penuh dynamic API Webhook. `BotManager.ts` sekarang dapat mem-parsing dan mengeksekusi external API calls dengan dukungan konversi media (text, image, video) secara otomatis, dan sticker-processing menggunakan `sharp`.
+- **Modular Plugin Architecture**: Fitur perintah hardcoded telah direfaktor menjadi arsitektur plugin modular di `src/engine/plugins`. Mendukung berbagai perintah dinamis (`ping`, `sticker`, `eval`, `exec`).
+- **Owner Security Verification**: Layer proteksi untuk command berbahaya (eval/exec) dengan validasi nomor Owner yang ter-normalisasi.
+- **Dynamic Command Handling & Menu**: Parsing command yang telah ditingkatkan, mendukung mode `single`, `multi`, atau `empty` (tanpa prefix) secara dinamis, serta integrasi dashboard untuk manajemen format menu bot.
+- **Enhanced Observability via SSE**: Peningkatan pelacakan uptime yang otomatis ter-sync melalui Server-Sent Events untuk ditampilkan secara *real-time* di UI dashboard.
+- **Multi-Tenant Storage Fixes**: Optimasi folder struktur database JSON (berbasis UUID) mencegah kebocoran sesi Baileys antar akun.
 
-### 🎨 UI/UX Modern (v2.3)
-- **Dark Mode & Light Mode** — full theme support dengan toggle smooth, persisten via localStorage
-- **Responsive Design** — optimal di semua perangkat (mobile, tablet, desktop)
-- **Glassmorphism Header** — efek blur + transparansi pada header sticky
-- **Smooth Page Transitions** — animasi `fade-in` saat berpindah tab
-- **Skeleton Loading** — placeholder animasi saat data sedang dimuat
-- **Micro-animations** — hover scale, translate, dan shadow pada elemen interaktif
-- **Font Inter** — tipografi modern dari Google Fonts
-- **CSS Variables** — sistem token warna konsisten untuk light & dark mode
-- **Dynamic Observability (v2.3.1)** — Live terminal logs dan Real-time Uptime counter (HH:MM:SS) yang berjalan otomatis saat bot online.
+---
 
-### 🧭 Sidebar Navigation
-- Sidebar fixed 240px dengan scroll navigasi vertikal
-- Grup navigasi: **General**, **Bot**, **User**
-- Active state dengan gradient violet-indigo + chevron indicator
-- Inactive state dengan hover overlay transparan (tidak konflik antar mode)
-- Logo header sejajar dengan main header (tinggi `64px` / `h-16`)
-- **Light mode**: background putih, teks gelap yang terbaca
-- **Dark mode**: background dark navy, teks terang
-- User footer dengan avatar, nama, dan plan
+## ✨ Fitur Utama WADASH V2
 
-### 📊 Dashboard
-- **Upgrade Banner** — CTA untuk upgrade plan dengan gradient violet
-- **Stat Cards (4 kartu)**:
-  - Bot Status (Online/Offline)
-  - Expired At (tanggal expired subscription)
-  - Runtime (uptime tracking bot)
-  - Role (Basic Plan / Premium)
-- **Bot Logs Card** — terminal viewer dengan status koneksi real-time (violet-themed di light mode)
-- **Control Panel** — segmented button row: **Start Bot**, Stop Bot, Delete
-- **Quick Links** — shortcut ke Commands, Catalog, Affiliate, Invoice
+### 🌐 Fitur Website (Dashboard Next.js)
+Tampilan WADASH V2 dibangun secara modern menggunakan Next.js App Router dan antarmuka berbasis komponen UI (Radix/Shadcn). Fitur yang tersedia pada website ini:
+- **Multi-Tenant Dashboard**: Mendukung manajemen banyak pengguna dalam satu aplikasi, di mana tiap pengguna memiliki database konfigurasi bot dan sesi otentikasi WhatsApp (Baileys UUID isolation) secara terpisah dan aman.
+- **Sistem Autentikasi**: Fitur Login & Registrasi pengguna yang tertutup rapat oleh keamanan session management berbasis *HTTP-only cookies*.
+- **Dark/Light Mode**: Tema antarmuka yang dapat diubah dan tersimpan otomatis dengan estetik *Glassmorphism*.
+- **Live Terminal & Stat Cards**: Menampilkan log CLI, status koneksi perangkat secara langsung, serta *Uptime* (durasi bot menyala aktif) langsung ke dalam GUI browser memanfaatkan teknologi *Server-Sent Events (SSE)*.
+- **Bot Configuration Editor**: Formulir interaktif untuk langsung mengatur pengaturan bot:
+  - Mengubah nama bot, nomor WhatsApp *Owner*, *limit* interaksi, dan saldo *balance*.
+  - Menentukan nama kemasan *sticker* (packname) beserta penulis kreatornya (author).
+  - Integrasi prefix dinamis: Dukungan prefix *Single* (seperti `/`, `!`), *Multi-prefix*, maupun *Tanpa Prefix*.
+  - *Feature Toggles*: Mengaktifkan notifikasi premium, mengatur otomatis online, dll.
 
-### ⚙️ Bot Configuration (Tab Config)
-- **Bot Information** — botName, footerText
-- **Sticker Configuration** — packname, authorname
-- **Limits & Balance** — default limit dan balance untuk user baru
-- **Owner Information** — ownerName, ownerNumber
-- **Prefix Settings** — karakter prefix + mode (Single / Multi / No Prefix) via radio pill
-- **Bot Features** — 5 toggle switch untuk mengaktifkan/menonaktifkan fitur:
-  - Online On Connect
-  - Premium Notification
-  - Sewa Notification → Group
-  - Sewa Notification → Owner
-  - Join To Use
-- Status feedback (success / error) setelah save
-- Tombol Save dengan gradient violet
-
-### 🤖 Bot Engine & Real-Time Sync (Baru!)
-- **Baileys WhatsApp Web API** terintegrasi secara modular running-in-process
-- **Real-Time Log Streaming via SSE** (Server-Sent Events) untuk streaming terminal log ke dashboard GUI
-- **Session Isolation** dengan Multi-Tenant `uuid` folder management
-- **Anti-Flagging Mechanism** menggunakan dynamic version fetcher & standard browser signature
-
-### ⚡ Performa
-- **Lazy config loading** — konfigurasi bot hanya di-fetch saat tab Config dibuka
-- **Config caching** — tidak re-fetch saat bolak-balik tab (menggunakan `configLoaded` flag)
-- **Parallel data fetching** — user data dan config di-fetch secara terpisah dan independen
-- **useCallback** — fungsi fetch di-memoize untuk menghindari re-render tidak perlu
-- **Turbopack** — development server lebih cepat dengan `--turbopack`
-
-### 🧹 Code Quality (v2.3)
-- Arsitektur modular: komponen kecil dan fokus (`SidebarButton`, `NavSection`, `StatCardItem`, `BotLogsCard`, `ControlPanelCard`, `DashboardContent`, dst.)
-- Semua data statis sebagai typed constants (`NAV_ITEMS`, `STAT_CARDS`, `QUICK_LINKS`)
-- Props-drilling minimal dengan interface TypeScript yang eksplisit
-- `import type` untuk type-only imports
-- Singleton pattern management untuk menghandle koneksi WhatsApp Multi-Device saat Hot Module Reloading (HMR)
-
-### 💾 Database
-- File-based JSON database (`database/database.json`)
-- Per-user configuration storage
-- Per-user WhatsApp Session credentials (isolated folder `database/sessions/{uuid}/`)
-- Default configuration untuk user baru
-- Easy backup dan migration
+### 🤖 Fitur Engine WhatsApp Bot (`src/engine`)
+Beroperasi mandiri di balik layar menggunakan *singleton pattern* `@whiskeysockets/baileys`:
+- **Dynamic API Webhook Responders**: Engine berkemampuan super ini dapat mengkonsumsi/memparsing balasan langsung dari URL API pihak ketiga. Mampu otomatis me-render tipe response berbentuk teks, memutar video, mengunduh file gambar, dan proses automasi media-handling dari API menjadi Sticker WhatsApp.
+- **Modular Command Plugins**: Arsitektur perintah bot yang sepenuhnya dinamis terbagi ke dalam sub-folder `src/engine/plugins`. Memudahkan siapapun untuk menambah kapabilitas bot baru (cukup melempar file JS/TS).
+- **Bot Commands Bawaan WADASH V2**:
+  1. `ping`: Mengecek latency waktu respons sistem ke server WhatsApp beserta total durasi uptime.
+  2. `sticker`: Fitur instant-maker pengubah otomatis setiap kiriman format gambar menjadi *WhatsApp Sticker* sempurna bersama metadata author dari konfigurasi.
+  3. `eval` & `exec`: *Terminal Command* tingkat super-admin untuk mengeksekusi instruksi JavaScript atau *Shell Server* langsung dari ruang percakapan WhatsApp.
+- **Owner Security System**: Eksekusi perintah divalidasi sangat ketat melalui format penomoran internasional yang ternormalisasi secara cerdas, memblokir penggunaan command berbahaya (`exec`, `eval`) oleh angka/pengguna acak sehingga engine tetap aman terlindungi jika digunakan untuk komersil SaaS.
 
 ---
 
@@ -114,7 +66,7 @@
 
 ### Prerequisites
 - Node.js 18+
-- npm, yarn, pnpm, atau bun
+- npm, pnpm, yarn, bun
 
 ### Installation
 
@@ -145,162 +97,34 @@ npm run dev
 
 ---
 
-## 📁 Struktur Project
+## 📁 Struktur Project Prioritas
 
-```
+```text
 WADASHV2/
 ├── src/
-│   ├── app/                      # Next.js App Router
-│   │   ├── api/
-│   │   │   ├── auth/             # Login, Register, Logout
-│   │   │   ├── config/           # Get & Update bot config
-│   │   │   ├── engine/           # Bot Engine Control (Start/Stop) & SSE
-│   │   │   └── user/             # Get user data
-│   │   ├── login/                # Halaman login
-│   │   ├── register/             # Halaman register
-│   │   ├── globals.css           # CSS variables & global styles
-│   │   └── page.tsx              # Dashboard (modular components)
+│   ├── app/                      
 │   ├── components/
-│   │   ├── ui/                   # shadcn/ui base components
-│   │   ├── ConfigForm.tsx        # Form konfigurasi bot
-│   │   ├── ThemeProvider.tsx     # Context provider dark/light mode
-│   │   └── ThemeToggle.tsx       # Tombol toggle tema
-│   ├── engine/
-│   │   └── BotManager.ts         # Singleton WhatsApp Baileys Instance Manager
-│   └── lib/
-│       ├── auth.ts               # Helper autentikasi & cookie
-│       ├── database.ts           # Operasi baca/tulis database
-│       └── utils.ts              # Utilitas umum
-├── database/
-│   ├── sessions/                 # Local directory multi-device Baileys Auth credentials
-│   └── database.json             # Penyimpanan user & konfigurasi
-└── public/                       # Static assets
+│   │   ├── ui/                   # Modular shadcn-based components (Avatar, Button, Card dll)
+│   │   └── ...                   
+│   └── engine/
+│       ├── plugins/              # Bot Command Plugins (ping, owner command, dsb)
+│       └── BotManager.ts         # Singleton WhatsApp Baileys Instance Manager
+├── database/                     # Tempat Database Session Multi-tenant & JSON user
+└── public/                       # Assets UI, Screenshots   
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Kategori       | Teknologi                        |
-|----------------|----------------------------------|
-| Framework      | Next.js 15 (App Router)          |
-| Language       | TypeScript 5                     |
-| Styling        | Tailwind CSS 3                   |
-| UI Components  | shadcn/ui + Radix UI             |
-| Core Engine    | Baileys (@whiskeysockets/baileys)|
-| Icons          | Lucide React                     |
-| Database       | File-based JSON (flat-file)      |
-| Authentication | Cookie-based sessions (HTTP-only)|
-| Dev Server     | Turbopack                        |
+- **Framework**: Next.js 15 (App Router) dengan Turbopack
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 3
+- **Core Engine**: Baileys (`@whiskeysockets/baileys`)
+- **Database**: Local JSON File-based (Zero config)
 
----
+<br/>
 
-## 📝 API Endpoints
-
-### Authentication
-| Method | Endpoint              | Deskripsi           |
-|--------|-----------------------|---------------------|
-| POST   | `/api/auth/register`  | Register user baru  |
-| POST   | `/api/auth/login`     | Login user          |
-| POST   | `/api/auth/logout`    | Logout user         |
-
-### Bot Engine Control
-| Method | Endpoint                 | Deskripsi                                    |
-|--------|--------------------------|----------------------------------------------|
-| GET    | `/api/engine/stream`     | Server-Sent Events (SSE) Stream untuk status |
-| POST   | `/api/engine/action`     | Mengontrol Bot (start, stop, delete)         |
-
-### User & Configuration
-| Method | Endpoint      | Deskripsi                                |
-|--------|---------------|------------------------------------------|
-| GET    | `/api/user`   | Ambil data user (authenticated)          |
-| GET    | `/api/config` | Ambil konfigurasi bot (authenticated)    |
-| POST   | `/api/config` | Update konfigurasi bot (authenticated)   |
-
----
-
-## 🔧 Bot Configuration Fields
-
-| Field                      | Type                   | Deskripsi                         |
-|----------------------------|------------------------|-----------------------------------|
-| `botName`                  | string                 | Nama bot WhatsApp                 |
-| `packname`                 | string                 | Nama package untuk sticker        |
-| `authorname`               | string                 | Nama author untuk sticker         |
-| `footerText`               | string                 | Footer text untuk pesan           |
-| `limit`                    | number                 | Limit penggunaan per user         |
-| `balance`                  | number                 | Balance awal user baru            |
-| `ownerName`                | string                 | Nama owner bot                    |
-| `ownerNumber`              | string                 | Nomor WhatsApp owner              |
-| `prefix`                   | string                 | Karakter prefix command           |
-| `prefixType`               | single / multi / empty | Mode prefix                       |
-| `onlineOnConnect`          | boolean                | Bot online saat connect           |
-| `premiumNotification`      | boolean                | Notifikasi premium expiry         |
-| `sewaNotificationToGroup`  | boolean                | Notif sewa ke group               |
-| `sewaNotificationToOwner`  | boolean                | Notif sewa ke owner               |
-| `joinToUse`                | boolean                | Wajib join group sebelum pakai    |
-
----
-
-## 🎨 Theme System
-
-WADASHV2 mendukung dark mode dan light mode sepenuhnya:
-- **CSS Variables** sebagai token warna (`--background`, `--foreground`, `--card`, dll.)
-- **Semantic classes** via Tailwind (`bg-background`, `text-foreground`, `border-border`)
-- Transisi smooth antar tema
-- Preferensi tema tersimpan di `localStorage`
-- Deteksi tema sistem (system preference)
-
----
-
-## 🔒 Security Notes
-
-> ⚠️ **PENTING untuk Production:**
-> - Implementasikan password hashing (bcrypt / argon2)
-> - Gunakan environment variables untuk secrets
-> - Implementasikan rate limiting pada API routes
-> - Tambahkan CSRF protection
-> - Gunakan HTTPS
-> - Migrasi database ke PostgreSQL (Supabase) untuk concurrency yang aman
-
----
-
-## 🚧 Roadmap
-
-- [ ] Password hashing dengan bcrypt
-- [ ] Multi-bot support scaling
-- [ ] Advanced analytics dashboard
-- [ ] Plugin Command System dinamis (Menerima input JS Files)
-- [ ] Webhook integration
-- [ ] Export / Import konfigurasi
-- [ ] Migrasi database ke Supabase (PostgreSQL)
-
----
-
-## 📄 License
-
-MIT License — bebas digunakan untuk keperluan personal maupun komersial.
-
----
-
-## 👨‍💻 Author
-
-**dikobokobok**
-- GitHub: [@dikobokobok](https://github.com/dikobokobok)
-- Repository: [WADASHV2](https://github.com/dikobokobok/WADASHV2)
-
----
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) — The React Framework
-- [shadcn/ui](https://ui.shadcn.com/) — Beautiful UI components
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS
-- [Lucide](https://lucide.dev/) — Beautiful open-source icons
-- [Radix UI](https://www.radix-ui.com/) — Accessible component primitives
-
----
-
-**Version:** 2.3  
-**Last Updated:** April 19, 2026
-
-Made with ❤️ by dikobokobok
+**Version:** 2.4.0  
+**License:** MIT  
+**Author:** [dikobokobok](https://github.com/dikobokobok)
