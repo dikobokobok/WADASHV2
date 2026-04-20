@@ -28,6 +28,14 @@ export interface UserProfile {
     createdAt: string;
 }
 
+export interface ApiResponderCommand {
+    id: string;
+    actionTrigger: string;
+    category: string;
+    apiLink: string;
+    sendOption: "text" | "media" | "sticker";
+}
+
 export interface BotConfig { // Mapped to {uuid}.settings.json
     botName: string;
     packname: string;
@@ -57,10 +65,10 @@ export interface BotOperationalData { // Mapped to {uuid}.bot.json
 type User = UserAuth & { botConfig?: BotConfig }; // Backward compatibility for some old usages if any
 
 const defaultBotConfig: BotConfig = {
-    botName: "WibuBot",
+    botName: "WADASH Bot",
     packname: "WADASH",
     authorname: "WADASH",
-    footerText: "© 2024 WADASH Bot",
+    footerText: "© 2026 WADASH Bot",
     limit: 100,
     balance: 10000,
     ownerName: "Admin",
@@ -92,10 +100,10 @@ if (fs.existsSync(OLD_DB_PATH) && !fs.existsSync(GLOBAL_ADMIN_PATH)) {
     try {
         const oldData = JSON.parse(fs.readFileSync(OLD_DB_PATH, "utf-8"));
         const newGlobalAdmin: GlobalAdminData = { users: [], systemStats: {}, securityLogs: [] };
-        
+
         for (const u of oldData.users) {
             const role = u.username.toLowerCase() === 'admin' ? 'admin' : 'user';
-            
+
             newGlobalAdmin.users.push({
                 id: u.id,
                 username: u.username,
@@ -116,7 +124,7 @@ if (fs.existsSync(OLD_DB_PATH) && !fs.existsSync(GLOBAL_ADMIN_PATH)) {
             writeBotSettings(u.id, u.botConfig || { ...defaultBotConfig });
             writeBotData(u.id, { ...defaultBotData });
         }
-        
+
         fs.writeFileSync(GLOBAL_ADMIN_PATH, JSON.stringify(newGlobalAdmin, null, 2));
         fs.unlinkSync(OLD_DB_PATH);
     } catch (err) {
@@ -169,6 +177,16 @@ export function readBotData(uuid: string): BotOperationalData | null {
 }
 export function writeBotData(uuid: string, data: BotOperationalData): void {
     fs.writeFileSync(path.join(DB_DIR, `${uuid}.bot.json`), JSON.stringify(data, null, 2));
+}
+
+// API Responders
+export function readBotApiResponders(uuid: string): ApiResponderCommand[] {
+    const p = path.join(DB_DIR, `${uuid}.api.json`);
+    if (!fs.existsSync(p)) return [];
+    return JSON.parse(fs.readFileSync(p, "utf-8"));
+}
+export function writeBotApiResponders(uuid: string, data: ApiResponderCommand[]): void {
+    fs.writeFileSync(path.join(DB_DIR, `${uuid}.api.json`), JSON.stringify(data, null, 2));
 }
 
 // Legacy-like operations for old code compatibility
@@ -244,7 +262,7 @@ export function createUser(username: string, email: string, password: string): U
         role,
         createdAt: new Date().toISOString()
     };
-    
+
     db.users.push(newUserAuth);
     writeGlobalAdmin(db);
 

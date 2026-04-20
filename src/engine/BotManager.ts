@@ -4,6 +4,9 @@ import path from 'path';
 import fs from 'fs';
 import { EventEmitter } from 'events';
 import qrcodeTerminal from 'qrcode-terminal';
+import pluginRegistry, { categoryRegistry } from './plugins/index';
+import { readBotApiResponders } from '../lib/database';
+import sharp from 'sharp';
 
 // Extend global so we can preserve BotManager across HMR in Next.js development
 declare global {
@@ -195,7 +198,14 @@ export class BotManager extends EventEmitter {
 
         const prefixType = settings.prefixType || 'single';
         const definedPrefix = settings.prefix || '#';
-        const textMessage = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
+
+        // Extract text dari semua sumber: teks biasa, caption gambar, reply ke gambar
+        const textMessage =
+            msg.message?.conversation ||
+            msg.message?.extendedTextMessage?.text ||
+            msg.message?.imageMessage?.caption ||
+            msg.message?.videoMessage?.caption ||
+            "";
 
         // Auto Read Logic
         if (settings.autoRead) {
@@ -229,25 +239,18 @@ export class BotManager extends EventEmitter {
         }
 
         if (isCommand && command) {
-            if (command === 'ping') {
-                sock.sendMessage(msg.key.remoteJid!, { text: 'Pong! 🏓 WADASH Engine works!' });
-            } else if (command === 'owner') {
-                const ownerName = settings.ownerName || "Admin";
-                const ownerNumber = settings.ownerNumber || "628989031500";
-
-                const vcard = 'BEGIN:VCARD\n'
-                    + 'VERSION:3.0\n'
-                    + `FN:${ownerName}\n`
-                    + `TEL;type=CELL;type=VOICE;waid=${ownerNumber}:${ownerNumber}\n`
-                    + 'END:VCARD';
-
-                await sock.sendMessage(msg.key.remoteJid!, {
-                    contacts: {
-                        displayName: ownerName,
-                        contacts: [{ vcard }]
-                    }
-                });
-            } else if (command === 'menu') {
+            // Try to find and execute a matching plugin first
+            const plugin = pluginRegistry.get(command);
+            if (plugin) {
+                const args = textMessage.slice(usedPrefix.length).trim().split(' ').slice(1);
+                try {
+                    await plugin.execute(sock, msg, args, settings);
+                    this.pushLog(uuid, `Command executed via plugin: ${command}`);
+                } catch (err: any) {
+                    console.error(`[Plugin:${command}] Error:`, err.message);
+                    this.pushLog(uuid, `Plugin error on command "${command}": ${err.message}`);
+                }
+            } else if (command === 'menu' || command === 'm') {
                 const rawMenu = settings.menuTemplate || "Menu template not set in dashboard.";
 
                 // Format Uptime
@@ -263,6 +266,20 @@ export class BotManager extends EventEmitter {
                 const timeStr = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
                 const dateStr = now.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
 
+                // Build {all fitur} — semua command dari semua plugin (hanya alias utama)
+                const allCommands = Array.from(categoryRegistry.values())
+                    .flat()
+                    .map(c => `${usedPrefix || definedPrefix}${c}`)
+                    .join('\n');
+
+                // Build {kategori} — semua kategori beserta command-nya, diurutkan
+                const kategoriText = Array.from(categoryRegistry.entries())
+                    .map(([cat, cmds]) => {
+                        const cmdList = cmds.map(c => `${usedPrefix || definedPrefix}${c}`).join('\n');
+                        return `${cat} :\n${cmdList}`;
+                    })
+                    .join('\n\n');
+
                 // Format the menu response
                 const responseText = rawMenu
                     .replace(/{user\.bot}/g, msg.pushName || "User")
@@ -271,12 +288,78 @@ export class BotManager extends EventEmitter {
                     .replace(/{time}/g, timeStr)
                     .replace(/{date}/g, dateStr)
                     .replace(/{action\.prefix}/g, usedPrefix || definedPrefix)
-                    .replace(/{all fitur}/g, "\n- ping\n- menu\n- sticker\n- exec")
-                    .replace(/{kategori\.download}/g, "\n- tiktok\n- instagram")
-                    .replace(/{kategori\.sticker}/g, "\n- sticker\n- take")
-                    .replace(/{kategori\.owner}/g, "\n- eval\n- exec\n- restart");
+                    .replace(/{all fitur}/g, allCommands || "menu")
+                    .replace(/{kategori}/g, kategoriText || "(belum ada kategori)")
+                    .replace(/{footer}/g, settings.footerText || "© 2024 WADASH Bot");
 
                 sock.sendMessage(msg.key.remoteJid!, { text: responseText });
+            } else {
+                const apiResponders = readBotApiResponders(uuid);
+                const fullCommandText = typeof usedPrefix === 'string' ? usedPrefix + command : command;
+                
+                let matchedResponder = apiResponders.find(r => r.actionTrigger.toLowerCase() === fullCommandText);
+                if (!matchedResponder) {
+                     matchedResponder = apiResponders.find(r => r.actionTrigger.toLowerCase() === command);
+                }
+
+                if (matchedResponder) {
+                    try {
+                        this.pushLog(uuid, `API Responder matched: ${matchedResponder.actionTrigger}`);
+                        const rawArgs = textMessage.slice((typeof usedPrefix === 'string' ? usedPrefix.length : 0) + command.length).trim();
+                        const segments = rawArgs.split('|').map(s => s.trim());
+                        
+                        let fetchUrl = matchedResponder.apiLink;
+                        for (let i = 0; i < segments.length; i++) {
+                            const placeholder = new RegExp(`\\{msg${i + 1}\\}`, 'g');
+                            fetchUrl = fetchUrl.replace(placeholder, encodeURIComponent(segments[i]));
+                        }
+                        fetchUrl = fetchUrl.replace(/\{msg\d+\}/g, '');
+                        
+                        const res = await fetch(fetchUrl);
+                        if (!res.ok) throw new Error(`API returned status ${res.status}`);
+                        
+                        if (matchedResponder.sendOption === 'text') {
+                            const textOutput = await res.text();
+                            await sock.sendMessage(msg.key.remoteJid!, { text: textOutput }, { quoted: msg });
+                        } else if (matchedResponder.sendOption === 'media') {
+                            const buffer = Buffer.from(await res.arrayBuffer());
+                            const contentType = res.headers.get('content-type') || 'application/octet-stream';
+                            
+                            if (contentType.startsWith('video/')) {
+                                await sock.sendMessage(msg.key.remoteJid!, { video: buffer, mimetype: contentType }, { quoted: msg });
+                            } else if (contentType.startsWith('image/')) {
+                                let imageBuffer = buffer;
+                                let finalMime = contentType;
+                                // Convert SVG to PNG for WhatsApp compatibility
+                                if (contentType.includes('svg')) {
+                                    imageBuffer = await sharp(buffer).png().toBuffer();
+                                    finalMime = 'image/png';
+                                }
+                                await sock.sendMessage(msg.key.remoteJid!, { image: imageBuffer, mimetype: finalMime }, { quoted: msg });
+                            } else {
+                                await sock.sendMessage(msg.key.remoteJid!, { document: buffer, mimetype: contentType, fileName: "download" }, { quoted: msg });
+                            }
+                        } else if (matchedResponder.sendOption === 'sticker') {
+                            const buffer = Buffer.from(await res.arrayBuffer());
+                            const webpBuffer = await sharp(buffer)
+                                    .resize(512, 512, {
+                                        fit: 'contain',
+                                        background: { r: 0, g: 0, b: 0, alpha: 0 }
+                                    })
+                                    .webp({ quality: 80, lossless: false })
+                                    .toBuffer();
+                            await sock.sendMessage(msg.key.remoteJid!, { sticker: webpBuffer }, { quoted: msg });
+                        }
+
+                        this.pushLog(uuid, `API Responder "${matchedResponder.actionTrigger}" executed successfully`);
+                    } catch (error: any) {
+                        console.error(`[API Responder] Error:`, error.message);
+                        this.pushLog(uuid, `API Responder Error: ${error.message}`);
+                        await sock.sendMessage(msg.key.remoteJid!, { text: `[Error API] Gagal memuat data dari Webhook / API: ${error.message}` }, { quoted: msg });
+                    }
+                } else {
+                    this.pushLog(uuid, `Unknown command: ${command}`);
+                }
             }
         }
     }

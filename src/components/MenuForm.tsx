@@ -48,9 +48,8 @@ const AVAILABLE_VARIABLES = [
     { name: "{date}", description: "Tanggal sekarang" },
     { name: "{action.prefix}", description: "Prefix yang digunakan oleh user" },
     { name: "{all fitur}", description: "List semua fitur tanpa filter kategori" },
-    { name: "{kategori.download}", description: "List fitur by kategori download" },
-    { name: "{kategori.sticker}", description: "List fitur by kategori sticker" },
-    { name: "{kategori.owner}", description: "List fitur by kategori owner" },
+    { name: "{kategori}", description: "Daftar kategori beserta fiturnya yang tersedia" },
+    { name: "{footer}", description: "Teks watermark / footer bot" },
 ];
 
 const DEFAULT_MENU = `halo {user.bot}🙌🏻
@@ -62,16 +61,13 @@ WELCOME TO {name.bot}
 > Tanggal : {date}
 > Prefix : {action.prefix}
 
-List Bot :
-{action.prefix}{all fitur}
+List Semua Fitur :
+{all fitur}
 
-List Bot by Kategori :
-download : 
-{action.prefix}{kategori.download}
-sticker :
-{action.prefix}{kategori.sticker}
-owner :
-{action.prefix}{kategori.owner}`;
+Atau Berdasarkan Kategori :
+{kategori}
+
+{footer}`;
 
 export default function MenuForm({
     config,

@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfigForm from "@/components/ConfigForm";
 import MenuForm from "@/components/MenuForm";
+import CommandsList from "@/components/CommandsList";
+import ApiResponderForm from "@/components/ApiResponderForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
     Home, CreditCard, HelpCircle, RotateCcw, Wrench,
@@ -27,7 +29,7 @@ import type { BotConfig } from "@/lib/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "config" | "menu";
+type Tab = "dashboard" | "config" | "menu" | "commands" | "api-responder";
 
 interface NavItem {
     label: string;
@@ -50,6 +52,7 @@ interface QuickLink {
     icon: React.ElementType;
     color: string;
     bg: string;
+    tab?: Tab;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -63,13 +66,15 @@ const DEFAULT_CONFIG: BotConfig = {
     balance: 10000,
     ownerName: "",
     ownerNumber: "",
-    prefix: "#",
+    prefix: "!",
     prefixType: "single",
     onlineOnConnect: true,
     premiumNotification: true,
     sewaNotificationToGroup: false,
     sewaNotificationToOwner: false,
     joinToUse: false,
+    autoRead: false,
+    menuTemplate: ""
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -82,8 +87,8 @@ const NAV_ITEMS: NavItem[] = [
 const BOT_NAV_ITEMS: NavItem[] = [
     { label: "Config", icon: Wrench, tab: "config" },
     { label: "Messages", icon: Inbox },
-    { label: "Commands", icon: Info },
-    { label: "Filter Command", icon: Filter },
+    { label: "Commands", icon: Info, tab: "commands" },
+    { label: "API Chat Responder", icon: Filter, tab: "api-responder" as Tab },
     { label: "Menu", icon: Edit, tab: "menu" },
     { label: "Catalog", icon: ShoppingBag },
 ];
@@ -134,7 +139,7 @@ const STAT_CARDS: StatCard[] = [
 ];
 
 const QUICK_LINKS: QuickLink[] = [
-    { label: "Commands", icon: Info, color: "text-blue-500", bg: "bg-blue-50    dark:bg-blue-950/40" },
+    { label: "Commands", icon: Info, color: "text-blue-500", bg: "bg-blue-50    dark:bg-blue-950/40", tab: "commands" as any },
     { label: "Catalog", icon: ShoppingBag, color: "text-amber-500", bg: "bg-amber-50   dark:bg-amber-950/40" },
     { label: "Affiliate", icon: UserPlus, color: "text-violet-500", bg: "bg-violet-50  dark:bg-violet-950/40" },
     { label: "Invoice", icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
@@ -499,6 +504,7 @@ export default function Dashboard() {
                             botLogs={botLogs}
                             botOnlineAt={botOnlineAt}
                             handleBotAction={handleBotAction}
+                            setActiveTab={setActiveTab}
                         />
                     )}
                     {activeTab === "config" && (
@@ -527,6 +533,12 @@ export default function Dashboard() {
                                 />
                             )
                     )}
+                    {activeTab === "commands" && (
+                        <CommandsList />
+                    )}
+                    {activeTab === "api-responder" && (
+                        <ApiResponderForm />
+                    )}
                 </div>
             </main>
         </div>
@@ -535,7 +547,7 @@ export default function Dashboard() {
 
 // ─── Dashboard tab content ────────────────────────────────────────────────────
 
-function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, botOnlineAt, handleBotAction }: { loadingUser: boolean, botStatus: string, qrDataUrl: string, botLogs: string[], botOnlineAt?: number, handleBotAction: (action: any) => void }) {
+function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, botOnlineAt, handleBotAction, setActiveTab }: { loadingUser: boolean, botStatus: string, qrDataUrl: string, botLogs: string[], botOnlineAt?: number, handleBotAction: (action: any) => void, setActiveTab: (tab: Tab) => void }) {
     const [uptimeString, setUptimeString] = useState<string>("00:00:00");
 
     useEffect(() => {
@@ -632,6 +644,9 @@ function DashboardContent({ loadingUser, botStatus, qrDataUrl, botLogs, botOnlin
                 {QUICK_LINKS.map((link) => (
                     <button
                         key={link.label}
+                        onClick={() => {
+                            if (link.tab) setActiveTab(link.tab as Tab);
+                        }}
                         className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-card border border-border hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-md transition-all duration-200 group"
                     >
                         <div className={`w-10 h-10 rounded-xl ${link.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
