@@ -4,9 +4,19 @@ import path from 'path';
 import fs from 'fs';
 import { EventEmitter } from 'events';
 import qrcodeTerminal from 'qrcode-terminal';
+import os from 'os';
 import pluginRegistry, { categoryRegistry } from './plugins/index';
 import { readBotApiResponders } from '../lib/database';
 import sharp from 'sharp';
+import ffmpeg from 'fluent-ffmpeg';
+import { Readable, PassThrough } from 'stream';
+import { FFMPEG_PATH } from './lib/ffmpeg';
+
+if (FFMPEG_PATH) {
+    ffmpeg.setFfmpegPath(FFMPEG_PATH);
+}
+
+
 
 // Extend global so we can preserve BotManager across HMR in Next.js development
 declare global {
@@ -266,14 +276,33 @@ export class BotManager extends EventEmitter {
                 const timeStr = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
                 const dateStr = now.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
 
-                // Build {all fitur} — semua command dari semua plugin (hanya alias utama)
-                const allCommands = Array.from(categoryRegistry.values())
-                    .flat()
+                const apiResponders = readBotApiResponders(uuid);
+
+                // Build {all fitur} — semua command dari semua plugin dan API responder
+                const pluginCommands = Array.from(categoryRegistry.values()).flat();
+                const apiResponderCommands = apiResponders.map(r => r.actionTrigger);
+                const combinedAllCommands = [...pluginCommands, ...apiResponderCommands];
+
+                const allCommands = combinedAllCommands
                     .map(c => `${usedPrefix || definedPrefix}${c}`)
                     .join('\n');
 
                 // Build {kategori} — semua kategori beserta command-nya, diurutkan
-                const kategoriText = Array.from(categoryRegistry.entries())
+                const dynamicCategoryMap = new Map<string, string[]>();
+                // Masukkan command dari plugin
+                for (const [cat, cmds] of categoryRegistry.entries()) {
+                    dynamicCategoryMap.set(cat, [...cmds]);
+                }
+                // Masukkan command dari API responder
+                for (const r of apiResponders) {
+                    const cat = r.category || 'GENERAL';
+                    if (!dynamicCategoryMap.has(cat)) {
+                        dynamicCategoryMap.set(cat, []);
+                    }
+                    dynamicCategoryMap.get(cat)!.push(r.actionTrigger);
+                }
+
+                const kategoriText = Array.from(dynamicCategoryMap.entries())
                     .map(([cat, cmds]) => {
                         const cmdList = cmds.map(c => `${usedPrefix || definedPrefix}${c}`).join('\n');
                         return `${cat} :\n${cmdList}`;
@@ -296,10 +325,10 @@ export class BotManager extends EventEmitter {
             } else {
                 const apiResponders = readBotApiResponders(uuid);
                 const fullCommandText = typeof usedPrefix === 'string' ? usedPrefix + command : command;
-                
+
                 let matchedResponder = apiResponders.find(r => r.actionTrigger.toLowerCase() === fullCommandText);
                 if (!matchedResponder) {
-                     matchedResponder = apiResponders.find(r => r.actionTrigger.toLowerCase() === command);
+                    matchedResponder = apiResponders.find(r => r.actionTrigger.toLowerCase() === command);
                 }
 
                 if (matchedResponder) {
@@ -307,28 +336,28 @@ export class BotManager extends EventEmitter {
                         this.pushLog(uuid, `API Responder matched: ${matchedResponder.actionTrigger}`);
                         const rawArgs = textMessage.slice((typeof usedPrefix === 'string' ? usedPrefix.length : 0) + command.length).trim();
                         const segments = rawArgs.split('|').map(s => s.trim());
-                        
+
                         let fetchUrl = matchedResponder.apiLink;
                         for (let i = 0; i < segments.length; i++) {
                             const placeholder = new RegExp(`\\{msg${i + 1}\\}`, 'g');
                             fetchUrl = fetchUrl.replace(placeholder, encodeURIComponent(segments[i]));
                         }
                         fetchUrl = fetchUrl.replace(/\{msg\d+\}/g, '');
-                        
+
                         const res = await fetch(fetchUrl);
                         if (!res.ok) throw new Error(`API returned status ${res.status}`);
-                        
+
                         if (matchedResponder.sendOption === 'text') {
                             const textOutput = await res.text();
                             await sock.sendMessage(msg.key.remoteJid!, { text: textOutput }, { quoted: msg });
                         } else if (matchedResponder.sendOption === 'media') {
                             const buffer = Buffer.from(await res.arrayBuffer());
                             const contentType = res.headers.get('content-type') || 'application/octet-stream';
-                            
+
                             if (contentType.startsWith('video/')) {
                                 await sock.sendMessage(msg.key.remoteJid!, { video: buffer, mimetype: contentType }, { quoted: msg });
                             } else if (contentType.startsWith('image/')) {
-                                let imageBuffer = buffer;
+                                let imageBuffer: any = buffer;
                                 let finalMime = contentType;
                                 // Convert SVG to PNG for WhatsApp compatibility
                                 if (contentType.includes('svg')) {
@@ -339,15 +368,41 @@ export class BotManager extends EventEmitter {
                             } else {
                                 await sock.sendMessage(msg.key.remoteJid!, { document: buffer, mimetype: contentType, fileName: "download" }, { quoted: msg });
                             }
+                        } else if (matchedResponder.sendOption === 'image') {
+                            const buffer = Buffer.from(await res.arrayBuffer());
+                            const contentType = res.headers.get('content-type') || 'image/jpeg';
+                            let imageBuffer: any = buffer;
+                            let finalMime = contentType;
+                            if (contentType.includes('svg')) {
+                                imageBuffer = await sharp(buffer).png().toBuffer();
+                                finalMime = 'image/png';
+                            }
+                            await sock.sendMessage(msg.key.remoteJid!, { image: imageBuffer, mimetype: finalMime }, { quoted: msg });
+                        } else if (matchedResponder.sendOption === 'video') {
+                            const buffer = Buffer.from(await res.arrayBuffer());
+                            const contentType = res.headers.get('content-type') || 'video/mp4';
+                            await sock.sendMessage(msg.key.remoteJid!, { video: buffer, mimetype: contentType }, { quoted: msg });
+                        } else if (matchedResponder.sendOption === 'gif') {
+                            const gifBuffer = Buffer.from(await res.arrayBuffer());
+                            // Convert GIF → MP4 (WhatsApp requires MP4 for gifPlayback, raw GIF won't work)
+                            const mp4Buffer = await convertGifToMp4(gifBuffer);
+                            await sock.sendMessage(msg.key.remoteJid!, { video: mp4Buffer, mimetype: 'video/mp4', gifPlayback: true }, { quoted: msg });
                         } else if (matchedResponder.sendOption === 'sticker') {
                             const buffer = Buffer.from(await res.arrayBuffer());
-                            const webpBuffer = await sharp(buffer)
+                            const contentType = res.headers.get('content-type') || '';
+                            let webpBuffer: Buffer;
+
+                            if (contentType.startsWith('video/') || contentType.includes('gif')) {
+                                webpBuffer = await convertVideoToWebp(buffer);
+                            } else {
+                                webpBuffer = await sharp(buffer)
                                     .resize(512, 512, {
                                         fit: 'contain',
                                         background: { r: 0, g: 0, b: 0, alpha: 0 }
                                     })
                                     .webp({ quality: 80, lossless: false })
                                     .toBuffer();
+                            }
                             await sock.sendMessage(msg.key.remoteJid!, { sticker: webpBuffer }, { quoted: msg });
                         }
 
@@ -372,3 +427,75 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export default manager;
+
+// Helper: Convert Video/GIF buffer to Animated WebP sticker
+function convertVideoToWebp(videoBuffer: Buffer): Promise<Buffer> {
+    const tmpDir = os.tmpdir();
+    const inputPath = path.join(tmpDir, `st_api_in_${Date.now()}.mp4`);
+    const outputPath = path.join(tmpDir, `st_api_out_${Date.now()}.webp`);
+    
+    fs.writeFileSync(inputPath, videoBuffer);
+
+    return new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+            .inputOptions(['-t 6']) // Limit 6s for WhatsApp
+            .outputOptions([
+                '-vf', 'scale=512:512:force_original_aspect_ratio=decrease,fps=15,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=#00000000',
+                '-vcodec', 'libwebp',
+                '-lossless', '0',
+                '-compression_level', '4',
+                '-q:v', '50',
+                '-loop', '0',
+                '-preset', 'picture',
+                '-an',
+                '-vsync', '0'
+            ])
+            .toFormat('webp')
+            .on('end', () => {
+                const buffer = fs.readFileSync(outputPath);
+                try {
+                    fs.unlinkSync(inputPath);
+                    fs.unlinkSync(outputPath);
+                } catch (e) {}
+                resolve(buffer);
+            })
+            .on('error', (err) => {
+                try {
+                    fs.unlinkSync(inputPath);
+                    fs.unlinkSync(outputPath);
+                } catch (e) {}
+                reject(err);
+            })
+            .save(outputPath);
+    });
+}
+
+// Helper: Convert GIF buffer to MP4 buffer using ffmpeg
+// WhatsApp requires MP4 format for gifPlayback to work correctly
+function convertGifToMp4(gifBuffer: Buffer): Promise<Buffer> {
+// ... existing code ...
+    return new Promise((resolve, reject) => {
+        const inputStream = new Readable();
+        inputStream.push(gifBuffer);
+        inputStream.push(null);
+
+        const chunks: Buffer[] = [];
+        const outputStream = new PassThrough();
+        outputStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        outputStream.on('end', () => resolve(Buffer.concat(chunks)));
+        outputStream.on('error', reject);
+
+        ffmpeg(inputStream)
+            .inputFormat('gif')
+            .videoCodec('libx264')
+            .outputOptions([
+                '-pix_fmt yuv420p',          // WhatsApp compatible pixel format
+                '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2', // Ensure even dimensions
+                '-movflags frag_keyframe+empty_moov',    // Streamable MP4
+                '-preset ultrafast',
+            ])
+            .outputFormat('mp4')
+            .on('error', reject)
+            .pipe(outputStream, { end: true });
+    });
+}

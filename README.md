@@ -2,7 +2,7 @@
 
 **WADASH V2** adalah dashboard modern untuk mengelola WhatsApp Bot dengan antarmuka yang elegan, bersih, dan profesional. Dibangun menggunakan Next.js 15 dengan TypeScript dan Tailwind CSS.
 
-![Version](https://img.shields.io/badge/version-2.4.0-violet)
+![Version](https://img.shields.io/badge/version-2.4.1-violet)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -25,8 +25,15 @@
 
 ---
 
-## 📝 Changelog (Update Terbaru v2.4.0)
+## 📝 Changelog
 
+### Version 2.4.1 (Latest)
+- **Animated Sticker Support**: Menambahkan dukungan pembuatan stiker bergerak dari **Video** dan **GIF**. Fitur ini tersedia pada perintah `sticker` (plugin) dan juga pada sistem **API Responder**.
+- **FFMPEG Path Resolution Fix**: Memperbaiki error `ENOENT` pada `ffmpeg-static` yang sering terjadi di environment Next.js/Windows/Docker dengan mengimplementasikan pencarian path binary secara runtime mendasarkan pada real-CWD.
+- **Architectural Refactoring**: Memisahkan konfigurasi media engine ke dalam `src/engine/lib/ffmpeg.ts` untuk menghindari *circular dependency* (ReferenceError) pada sistem plugin.
+- **Improved API Responder**: Penambahan logika deteksi `content-type` otomatis untuk mengonversi hasil fetch API (Video/GIF) langsung menjadi stiker WhatsApp yang valid.
+
+### Version 2.4.0
 - **Bot API Responders**: Integrasi penuh dynamic API Webhook. `BotManager.ts` sekarang dapat mem-parsing dan mengeksekusi external API calls dengan dukungan konversi media (text, image, video) secara otomatis, dan sticker-processing menggunakan `sharp`.
 - **Modular Plugin Architecture**: Fitur perintah hardcoded telah direfaktor menjadi arsitektur plugin modular di `src/engine/plugins`. Mendukung berbagai perintah dinamis (`ping`, `sticker`, `eval`, `exec`).
 - **Owner Security Verification**: Layer proteksi untuk command berbahaya (eval/exec) dengan validasi nomor Owner yang ter-normalisasi.
@@ -52,11 +59,11 @@ Tampilan WADASH V2 dibangun secara modern menggunakan Next.js App Router dan ant
 
 ### 🤖 Fitur Engine WhatsApp Bot (`src/engine`)
 Beroperasi mandiri di balik layar menggunakan *singleton pattern* `@whiskeysockets/baileys`:
-- **Dynamic API Webhook Responders**: Engine berkemampuan super ini dapat mengkonsumsi/memparsing balasan langsung dari URL API pihak ketiga. Mampu otomatis me-render tipe response berbentuk teks, memutar video, mengunduh file gambar, dan proses automasi media-handling dari API menjadi Sticker WhatsApp.
+- **Dynamic API Webhook Responders**: Engine berkemampuan super ini dapat mengkonsumsi/memparsing balasan langsung dari URL API pihak ketiga. Mampu otomatis me-render tipe response berbentuk teks, memutar video, mengunduh file gambar, dan proses automasi media-handling dari API menjadi Sticker WhatsApp (Statik maupun Animasi).
 - **Modular Command Plugins**: Arsitektur perintah bot yang sepenuhnya dinamis terbagi ke dalam sub-folder `src/engine/plugins`. Memudahkan siapapun untuk menambah kapabilitas bot baru (cukup melempar file JS/TS).
 - **Bot Commands Bawaan WADASH V2**:
   1. `ping`: Mengecek latency waktu respons sistem ke server WhatsApp beserta total durasi uptime.
-  2. `sticker`: Fitur instant-maker pengubah otomatis setiap kiriman format gambar menjadi *WhatsApp Sticker* sempurna bersama metadata author dari konfigurasi.
+  2. `sticker`: Fitur instant-maker pengubah otomatis setiap kiriman format gambar, video, atau GIF menjadi *WhatsApp Sticker* sempurna bersama metadata author dari konfigurasi.
   3. `eval` & `exec`: *Terminal Command* tingkat super-admin untuk mengeksekusi instruksi JavaScript atau *Shell Server* langsung dari ruang percakapan WhatsApp.
 - **Owner Security System**: Eksekusi perintah divalidasi sangat ketat melalui format penomoran internasional yang ternormalisasi secara cerdas, memblokir penggunaan command berbahaya (`exec`, `eval`) oleh angka/pengguna acak sehingga engine tetap aman terlindungi jika digunakan untuk komersil SaaS.
 
@@ -125,6 +132,6 @@ WADASHV2/
 
 <br/>
 
-**Version:** 2.4.0  
+**Version:** 2.4.1  
 **License:** MIT  
 **Author:** [dikobokobok](https://github.com/dikobokobok)

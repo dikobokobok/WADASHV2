@@ -59,7 +59,7 @@ export default function ApiResponderForm() {
             actionTrigger: "",
             category: "general",
             apiLink: "",
-            sendOption: "media",
+            sendOption: "image",
         });
         setViewMode("form");
     };
@@ -161,7 +161,9 @@ export default function ApiResponderForm() {
                                     className="w-full h-10 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                                 >
                                     <option value="text">Text (Output berupa Teks)</option>
-                                    <option value="media">Media (Image/Video dari API)</option>
+                                    <option value="image">Gambar (Image dari API)</option>
+                                    <option value="video">Video (Video dari API)</option>
+                                    <option value="gif">GIF (Animasi GIF dari API)</option>
                                     <option value="sticker">Sticker (Konversi Gambar ke Stiker)</option>
                                 </select>
                             </div>
@@ -260,14 +262,14 @@ export default function ApiResponderForm() {
                                         <p className="text-xs text-muted-foreground font-mono truncate">{r.apiLink}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button 
+                                        <button
                                             onClick={() => handleEditForm(r)}
                                             disabled={saving}
                                             className="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors disabled:opacity-50"
                                         >
                                             <Edit2 className="w-4 h-4" />
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => handleDelete(r.id)}
                                             disabled={saving}
                                             className="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors disabled:opacity-50"

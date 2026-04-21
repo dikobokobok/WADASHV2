@@ -33,7 +33,7 @@ export interface ApiResponderCommand {
     actionTrigger: string;
     category: string;
     apiLink: string;
-    sendOption: "text" | "media" | "sticker";
+    sendOption: "text" | "media" | "image" | "video" | "gif" | "sticker";
 }
 
 export interface BotConfig { // Mapped to {uuid}.settings.json
@@ -81,7 +81,7 @@ const defaultBotConfig: BotConfig = {
     sewaNotificationToOwner: false,
     joinToUse: false,
     autoRead: false,
-    menuTemplate: "halo {user.bot}🙌🏻\n\nWELCOME TO {name.bot}\n> Name BOT : {name.bot}\n> Uptime : {uptime}\n> Jam : {time}\n> Tanggal : {date}\n> Prefix : {action.prefix}\n\nList Bot :\n{action.prefix}{all fitur}\n\nList Bot by Kategori :\ndownload : \n{action.prefix}{kategori.download}\nsticker :\n{action.prefix}{kategori.sticker}\nowner :\n{action.prefix}{kategori.owner}"
+    menuTemplate: "halo {user.bot}🙌🏻\n\nWELCOME TO {name.bot}\n> Name BOT : {name.bot}\n> Uptime : {uptime}\n> Jam : {time}\n> Tanggal : {date}\n> Prefix : {action.prefix}\n\nList Bot :\n{all fitur}\n\nList Bot by Kategori :\n{kategori}"
 };
 
 const defaultBotData: BotOperationalData = {
