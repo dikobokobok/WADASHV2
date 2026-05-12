@@ -10,7 +10,7 @@ WADASH (WhatsApp Dashboard) adalah sistem canggih yang memadukan keandalan siste
 
 ## 📸 Tampilan Utama Web (Dashboard)
 
-![Main Dashboard Screenshot](./public/screenshot-placeholder.png)
+![Main Dashboard Screenshot](https://c.top4top.io/p_3784uducx1.jpeg)
 *(Tampilan Dashboard utama dengan desain modern, mode gelap/terang, dan kartu statistik interaktif)*
 
 ---
