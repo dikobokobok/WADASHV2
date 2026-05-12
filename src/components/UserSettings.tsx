@@ -17,6 +17,11 @@ export default function UserSettings() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Global Owner settings state
+    const [globalOwnerNumber, setGlobalOwnerNumber] = useState("");
+    const [savingGlobalOwner, setSavingGlobalOwner] = useState(false);
+    const [globalOwnerStatus, setGlobalOwnerStatus] = useState<{type: 'error' | 'success', message: string} | null>(null);
+
     // Profile edit state
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editUsername, setEditUsername] = useState("");
@@ -41,12 +46,29 @@ export default function UserSettings() {
                 setProfile(data);
                 setEditUsername(data.username);
                 setEditEmail(data.email);
+
+                if (data.role === 'globOwner') {
+                    fetchGlobalOwnerConfig();
+                }
             } catch (err: any) {
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
+
+        const fetchGlobalOwnerConfig = async () => {
+            try {
+                const res = await fetch("/api/admin/global-owner");
+                if (res.ok) {
+                    const data = await res.json();
+                    setGlobalOwnerNumber(data.globalOwnerNumber || "");
+                }
+            } catch (err) {
+                console.error("Failed to fetch global owner config", err);
+            }
+        };
+
         fetchProfile();
     }, []);
 
@@ -124,6 +146,30 @@ export default function UserSettings() {
             setPasswordStatus({ type: 'error', message: err.message || 'Failed to update password' });
         } finally {
             setChanging(false);
+        }
+    };
+
+    const handleGlobalOwnerUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setGlobalOwnerStatus(null);
+        setSavingGlobalOwner(true);
+
+        try {
+            const res = await fetch("/api/admin/global-owner", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ globalOwnerNumber })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to update global owner number");
+
+            setGlobalOwnerStatus({ type: 'success', message: 'Global Owner number updated successfully!' });
+            setTimeout(() => setGlobalOwnerStatus(null), 3000);
+        } catch (err: any) {
+            setGlobalOwnerStatus({ type: 'error', message: err.message || 'Update failed' });
+        } finally {
+            setSavingGlobalOwner(false);
         }
     };
 
@@ -394,6 +440,60 @@ export default function UserSettings() {
                         </form>
                     </CardContent>
                 </Card>
+
+                {/* Global Owner Configuration Card */}
+                {profile?.role === 'globOwner' && (
+                    <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 overflow-hidden md:col-span-2 mt-4">
+                        <CardHeader className="border-b border-indigo-100 dark:border-indigo-900/30 pb-4">
+                            <CardTitle className="text-lg flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+                                <Shield className="w-5 h-5 text-indigo-500" />
+                                Global Owner Configuration
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="max-w-2xl space-y-6">
+                                <div className="bg-indigo-100/50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800/30 text-sm text-indigo-800 dark:text-indigo-300 leading-relaxed">
+                                    <span className="font-semibold block mb-1">Set Global Owner JID</span>
+                                    Masukkan <strong>JID</strong> (WhatsApp ID) Anda, bukan nomor telepon. JID dapat dilihat dari perintah bot <code>checkrole</code>. Contoh format: <code>6285135957662@s.whatsapp.net</code> atau <code>128665023213725@lid</code>.
+                                    <br />Nomor ini akan mendapat akses penuh ke semua perintah bot termasuk <code>!exec</code> dan <code>!eval</code>.
+                                </div>
+
+                                {globalOwnerStatus && (
+                                    <div className={`p-3 rounded-lg text-sm flex items-start gap-2 ${
+                                        globalOwnerStatus.type === 'error' 
+                                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30' 
+                                            : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30'
+                                    }`}>
+                                        {globalOwnerStatus.type === 'error' ? <AlertCircle className="w-4 h-4 mt-0.5" /> : <CheckCircle2 className="w-4 h-4 mt-0.5" />}
+                                        <p className="leading-relaxed">{globalOwnerStatus.message}</p>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleGlobalOwnerUpdate} className="flex flex-col sm:flex-row gap-3">
+                                    <input 
+                                        type="text" 
+                                        value={globalOwnerNumber}
+                                        onChange={(e) => setGlobalOwnerNumber(e.target.value)}
+                                        placeholder="e.g. 128665023213725@lid atau 6285135957662@s.whatsapp.net"
+                                        className="flex-1 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono"
+                                        required
+                                    />
+                                    <button 
+                                        type="submit" 
+                                        disabled={savingGlobalOwner || !globalOwnerNumber}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center sm:w-auto w-full shadow-md shadow-indigo-500/20"
+                                    >
+                                        {savingGlobalOwner ? (
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            "Save Configuration"
+                                        )}
+                                    </button>
+                                </form>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );

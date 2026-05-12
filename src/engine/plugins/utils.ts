@@ -18,24 +18,38 @@ export function normalizeNumber(raw: string): string {
     return num;
 }
 
+import { getGlobalOwnerNumber } from '@/lib/database';
+
 /**
  * Mendapatkan role pengguna (globOwner, Owner, atau User)
  */
 export function getUserRole(msg: WAMessage, settings: Record<string, any>): "globOwner" | "Owner" | "User" {
-    const senderJid = (msg.key?.participant || msg.key?.remoteJid || '').toString();
-    const senderNorm = normalizeNumber(senderJid);
+    const participant = (msg.key?.participant || '').toString();
+    const remoteJid = (msg.key?.remoteJid || '').toString();
 
-    // globOwner: memiliki seluruh hak akses bot
-    const globOwnerNumber = process.env.GLOBAL_OWNER_NUMBER || "628989031500"; // Default globOwner
-    if (globOwnerNumber && senderNorm === normalizeNumber(globOwnerNumber)) {
+    // globOwner: cocokkan langsung JID (mendukung @lid maupun @s.whatsapp.net)
+    const dbGlobOwner = getGlobalOwnerNumber();
+    const globOwnerJid = dbGlobOwner || process.env.GLOBAL_OWNER_NUMBER || "";
+
+    if (globOwnerJid && (participant === globOwnerJid || remoteJid === globOwnerJid)) {
         return "globOwner";
     }
 
+    // Fallback: normalisasi nomor (untuk backward compatibility)
+    const senderNorm = normalizeNumber(participant || remoteJid);
+    if (globOwnerJid && !globOwnerJid.includes('@')) {
+        // Jika yang disimpan adalah nomor biasa (bukan JID), normalisasi dan bandingkan
+        if (senderNorm === normalizeNumber(globOwnerJid)) {
+            return "globOwner";
+        }
+    }
+
     // Owner: owner dari bot (berdasarkan setting)
+    const senderJid = participant || remoteJid;
     const ownerRaw: string = (settings.ownerNumber ?? '').toString().trim();
     if (ownerRaw) {
         const ownerNorm = normalizeNumber(ownerRaw);
-        if (senderNorm === ownerNorm) {
+        if (normalizeNumber(senderJid) === ownerNorm) {
             return "Owner";
         }
     }
@@ -43,6 +57,7 @@ export function getUserRole(msg: WAMessage, settings: Record<string, any>): "glo
     // User: pengguna biasa
     return "User";
 }
+
 
 /**
  * Mengecek apakah pengguna adalah globOwner (memiliki seluruh hak akses)

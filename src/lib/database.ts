@@ -43,6 +43,7 @@ export interface GlobalAdminData {
     systemStats: Record<string, unknown>;
     securityLogs: SecurityAuditEntry[];
     sessions: AuthSessionRecord[];
+    globalOwnerNumber?: string;
 }
 
 export interface UserProfile {
@@ -172,6 +173,7 @@ function normalizeGlobalAdmin(raw: unknown): GlobalAdminData {
                 : {},
         securityLogs: Array.isArray(o.securityLogs) ? (o.securityLogs as SecurityAuditEntry[]) : [],
         sessions: Array.isArray(o.sessions) ? (o.sessions as AuthSessionRecord[]) : [],
+        globalOwnerNumber: o.globalOwnerNumber,
     };
 }
 
@@ -196,6 +198,16 @@ export function readGlobalAdmin(): GlobalAdminData {
 
 export function writeGlobalAdmin(data: GlobalAdminData): void {
     fs.writeFileSync(GLOBAL_ADMIN_PATH, JSON.stringify(data, null, 2));
+}
+
+export function getGlobalOwnerNumber(): string | undefined {
+    return readGlobalAdmin().globalOwnerNumber;
+}
+
+export function setGlobalOwnerNumber(number: string): void {
+    const db = readGlobalAdmin();
+    db.globalOwnerNumber = number;
+    writeGlobalAdmin(db);
 }
 
 const MAX_AUDIT_LOG = 2000;

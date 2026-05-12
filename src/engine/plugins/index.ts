@@ -7,6 +7,7 @@ import * as owner from './owner';
 import * as sticker from './sticker';
 import * as exec from './exec';
 import * as evalPlugin from './eval';
+import * as checkrole from './checkrole';
 // ============================
 
 export interface Plugin {
@@ -27,6 +28,7 @@ const pluginList: Plugin[] = [
     sticker,
     exec,
     evalPlugin,
+    checkrole,
 ];
 
 // Build map command -> plugin
