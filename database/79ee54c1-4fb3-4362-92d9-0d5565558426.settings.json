@@ -1,0 +1,19 @@
+{
+  "botName": "WADASH Bot",
+  "packname": "WADASH",
+  "authorname": "WADASH",
+  "footerText": "© 2026 WADASH Bot",
+  "limit": 100,
+  "balance": 10000,
+  "ownerName": "Admin",
+  "ownerNumber": "62xxx",
+  "prefix": "#",
+  "prefixType": "single",
+  "onlineOnConnect": true,
+  "premiumNotification": true,
+  "sewaNotificationToGroup": false,
+  "sewaNotificationToOwner": false,
+  "joinToUse": false,
+  "autoRead": false,
+  "menuTemplate": "halo {user.bot}🙌🏻\n\nWELCOME TO {name.bot}\n> Name BOT : {name.bot}\n> Uptime : {uptime}\n> Jam : {time}\n> Tanggal : {date}\n> Prefix : {action.prefix}\n\nList Bot :\n{all fitur}\n\nList Bot by Kategori :\n{kategori}"
+}

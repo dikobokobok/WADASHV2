@@ -1,0 +1,328 @@
+{
+  "users": [
+    {
+      "id": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "username": "inu",
+      "email": "inu.kobokanair3@gmail.com",
+      "password": "$2b$12$yet11RT.2mMDDkfiPu207OBNM4LnDIr7qFcQJiwALyBP4I6Dm2h5.",
+      "role": "globOwner",
+      "createdAt": "2026-05-12T18:02:13.742Z",
+      "loginSecurity": {
+        "failedAttempts": 0,
+        "lockedUntil": null
+      }
+    },
+    {
+      "id": "79ee54c1-4fb3-4362-92d9-0d5565558426",
+      "username": "admin",
+      "email": "adm@a.da",
+      "password": "$2b$12$g7u3DfKHeQSynuEY0LdcyOrdPfBuG/3p6mD9CPpB4B1VM3Q5ZN.Zm",
+      "role": "basic",
+      "createdAt": "2026-05-12T18:10:14.621Z"
+    }
+  ],
+  "systemStats": {},
+  "securityLogs": [
+    {
+      "at": "2026-05-12T18:02:13.756Z",
+      "action": "register_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "username=inu",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:05:11.774Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:05:50.587Z",
+      "action": "register_success",
+      "userId": "eace06f0-18fb-437a-aa85-699feaf7d23d",
+      "detail": "username=admin",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:06:15.799Z",
+      "action": "logout",
+      "userId": "eace06f0-18fb-437a-aa85-699feaf7d23d",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:06:46.320Z",
+      "action": "register_success",
+      "userId": "009abeb6-3bd9-4bf0-96cf-6eb235e07310",
+      "detail": "username=ibnu",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:09:51.933Z",
+      "action": "logout",
+      "userId": "009abeb6-3bd9-4bf0-96cf-6eb235e07310",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:09:55.520Z",
+      "action": "login_failure",
+      "detail": "unknown_user",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:10:14.641Z",
+      "action": "register_success",
+      "userId": "79ee54c1-4fb3-4362-92d9-0d5565558426",
+      "detail": "username=admin",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:10:37.257Z",
+      "action": "logout",
+      "userId": "79ee54c1-4fb3-4362-92d9-0d5565558426",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:10:44.789Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:11:20.806Z",
+      "action": "engine_start",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:12:45.446Z",
+      "action": "bot_config_updated",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:17:24.325Z",
+      "action": "engine_start",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:17:33.579Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:17:39.966Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:17:45.495Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:17:58.334Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:21:10.862Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:21:17.337Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:22:22.541Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:24:35.801Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:24:55.999Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:25:37.769Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:26:01.086Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:26:29.385Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:26:33.470Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:26:37.187Z",
+      "action": "logout",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:26:43.147Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:27:20.304Z",
+      "action": "PASSWORD_CHANGE_FAILED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "Incorrect current password"
+    },
+    {
+      "at": "2026-05-12T18:29:22.655Z",
+      "action": "PASSWORD_CHANGED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "User changed password successfully and sessions were revoked"
+    },
+    {
+      "at": "2026-05-12T18:29:31.178Z",
+      "action": "login_failure",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "bad_password",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:31:45.326Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:32:11.019Z",
+      "action": "PASSWORD_CHANGED",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "detail": "User changed password successfully and sessions were revoked"
+    },
+    {
+      "at": "2026-05-12T18:32:18.661Z",
+      "action": "login_success",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    },
+    {
+      "at": "2026-05-12T18:32:24.420Z",
+      "action": "engine_start",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "ip": "127.0.0.1"
+    }
+  ],
+  "sessions": [
+    {
+      "jti": "5729f94e-ef22-4964-aa22-65c08ec93555",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:02:13.751Z",
+      "revokedAt": "2026-05-12T18:05:11.773Z",
+      "csrfToken": "2224b4047baad54a13cd1f03910a092a26b45d506dfc60ff"
+    },
+    {
+      "jti": "3147eb83-5245-4f6d-920b-7292e5712304",
+      "userId": "eace06f0-18fb-437a-aa85-699feaf7d23d",
+      "createdAt": "2026-05-12T18:05:50.582Z",
+      "revokedAt": "2026-05-12T18:06:15.797Z",
+      "csrfToken": "580694c27af12ec5000c5c72847807f83570e86048b5295e"
+    },
+    {
+      "jti": "0003b1eb-c3df-48ee-839d-b1ba71911560",
+      "userId": "009abeb6-3bd9-4bf0-96cf-6eb235e07310",
+      "createdAt": "2026-05-12T18:06:46.316Z",
+      "revokedAt": "2026-05-12T18:09:51.931Z",
+      "csrfToken": "b41e4b0e6b9f4279a98027bf6666f0285b92430efb37f87b"
+    },
+    {
+      "jti": "67caf203-1aee-4e16-b730-69c8ba68c3bf",
+      "userId": "79ee54c1-4fb3-4362-92d9-0d5565558426",
+      "createdAt": "2026-05-12T18:10:14.633Z",
+      "revokedAt": "2026-05-12T18:10:37.256Z",
+      "csrfToken": "01a5b4079c4edf4288ae7fd987ae41b4093dec7489916f42"
+    },
+    {
+      "jti": "97632bb8-0362-452e-9a70-146d92a25b70",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:10:44.778Z",
+      "revokedAt": "2026-05-12T18:17:33.575Z",
+      "csrfToken": "cb1505b70ae6cfeda5692173e4ec2e1b1801e58ef1338bec"
+    },
+    {
+      "jti": "895dd895-cc28-4ed2-998e-b3b6cc374fb0",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:17:39.960Z",
+      "revokedAt": "2026-05-12T18:17:45.493Z",
+      "csrfToken": "836060f7b530cbb016c2c13f22f6e13474bfe4d1ff8ffe7c"
+    },
+    {
+      "jti": "7e6e7968-e54c-4a01-b0f5-db17938cf2b2",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:17:58.313Z",
+      "revokedAt": "2026-05-12T18:21:10.860Z",
+      "csrfToken": "184c59ec7a82fae15d0561f1b796b12ca497c9e162d90069"
+    },
+    {
+      "jti": "0a28c941-89c9-4bbe-a73f-ee0c681d0de2",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:21:17.333Z",
+      "revokedAt": "2026-05-12T18:26:29.382Z",
+      "csrfToken": "3ce12ba371d6925b5e96974dd6635474a4e31854fed7fc42"
+    },
+    {
+      "jti": "80f691b0-31fc-4ad4-8d6b-a61676d93dd0",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:26:33.454Z",
+      "revokedAt": "2026-05-12T18:26:37.182Z",
+      "csrfToken": "952e0542bd5f7fc76db208c305f21d4c437aa1dcbf066824"
+    },
+    {
+      "jti": "125d6e25-4117-48b3-85e3-85a74a063878",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:26:43.127Z",
+      "revokedAt": "2026-05-12T18:29:22.652Z",
+      "csrfToken": "4e8b892b08656fdaab36030ad4bc6bd071783f344e781552"
+    },
+    {
+      "jti": "f0779d58-7433-4334-a999-9d387117602f",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:31:45.305Z",
+      "revokedAt": "2026-05-12T18:32:11.017Z",
+      "csrfToken": "7cd0053647826d5a0a3b17a0bf1746845005093f748d57bb"
+    },
+    {
+      "jti": "95396328-155f-4524-ab0c-313bcf0dda79",
+      "userId": "2a05414e-7f84-49c0-ba17-a16dc5b9bb95",
+      "createdAt": "2026-05-12T18:32:18.655Z",
+      "revokedAt": null,
+      "csrfToken": "c66ecbd64a1e766aa9d8f4a7b04712a3154be9f35eaab4f8"
+    }
+  ]
+}
