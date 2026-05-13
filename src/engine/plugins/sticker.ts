@@ -1,5 +1,6 @@
 import { WAMessage, downloadMediaMessage } from '@whiskeysockets/baileys';
 import makeWASocket from '@whiskeysockets/baileys';
+import { sendWithTyping } from './utils';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 import { FFMPEG_PATH } from '../lib/ffmpeg';
@@ -30,7 +31,7 @@ export async function execute(
     const isDirectVideo = !!msg.message?.videoMessage;
 
     if (!isDirectImage && !isDirectVideo && !isQuotedImage && !isQuotedVideo) {
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: '❌ Kirim atau reply sebuah gambar/video/gif dengan caption *!sticker* untuk membuat sticker.'
         }, { quoted: msg });
         return;
@@ -76,13 +77,13 @@ export async function execute(
         }
 
         // Kirim sebagai sticker
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             sticker: webpBuffer,
         }, { quoted: msg });
 
     } catch (err: any) {
         console.error('[Sticker] Error:', err.message);
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: `❌ Gagal membuat sticker: ${err.message}`
         }, { quoted: msg });
     }

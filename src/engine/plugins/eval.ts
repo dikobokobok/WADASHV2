@@ -1,6 +1,6 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import makeWASocket from '@whiskeysockets/baileys';
-import { isGlobOwner } from './utils';
+import { isGlobOwner, sendWithTyping } from './utils';
 import nodePath from 'path';
 import nodeFs from 'fs';
 import nodeOs from 'os';
@@ -20,7 +20,7 @@ export async function execute(
 
     // === GlobOwner Guard ===
     if (!isGlobOwner(msg, settings)) {
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: '🚫 Perintah ini hanya bisa digunakan oleh *Global Owner*.'
         }, { quoted: msg });
         return;
@@ -31,7 +31,7 @@ export async function execute(
     const rawCode = args.join(' ').trim();
     const code = rawCode.split('\n')[0].trim();
     if (!code) {
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: '❓ *Penggunaan:* `!eval <kode javascript>`\n\n*Contoh:*\n`!eval 2 + 2`\n`!eval Buffer.from(\'WADASH\').toString(\'base64\')`\n`!eval Object.keys(settings).join(\', \')`'
         }, { quoted: msg });
         return;
@@ -82,7 +82,7 @@ export async function execute(
             ? result.slice(0, 3500) + '\n\n...[output dipotong]'
             : result;
 
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: `\`\`\`\nEval: ${code}\n\nOutput:\n${truncated}\n\`\`\``
         }, { quoted: msg });
 
@@ -91,7 +91,7 @@ export async function execute(
     } catch (err: any) {
         const errMsg = err?.message || String(err);
 
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: `\`\`\`\nEval: ${code}\n\n❌ ${err?.name || 'Error'}:\n${errMsg}\n\`\`\``
         }, { quoted: msg });
 

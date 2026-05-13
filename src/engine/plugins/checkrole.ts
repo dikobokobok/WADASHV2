@@ -1,6 +1,6 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import makeWASocket from '@whiskeysockets/baileys';
-import { getUserRole, normalizeNumber } from './utils';
+import { getUserRole, normalizeNumber, sendWithTyping } from './utils';
 import { getGlobalOwnerNumber } from '@/lib/database';
 
 export const command = 'checkrole';
@@ -30,5 +30,5 @@ export async function execute(
 - *Fallback:* ${fallback}
 - *Match?:* ${dbGlobOwner ? senderNorm === normalizeNumber(dbGlobOwner) : 'N/A'}`;
 
-    await sock.sendMessage(jid, { text }, { quoted: msg });
+    await sendWithTyping(sock, jid, { text }, { quoted: msg });
 }

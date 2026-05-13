@@ -196,6 +196,31 @@ export class BotManager extends EventEmitter {
         }
     }
 
+    /**
+     * Simulates human-like typing before sending a message.
+     * Shows "composing" presence for a calculated delay, then sends the message.
+     * Delay is dynamic: ~60ms per character, capped between 1.5s and 5s.
+     */
+    private async sendWithTyping(
+        sock: ReturnType<typeof makeWASocket>,
+        jid: string,
+        content: Parameters<ReturnType<typeof makeWASocket>['sendMessage']>[1],
+        options?: Parameters<ReturnType<typeof makeWASocket>['sendMessage']>[2]
+    ) {
+        // Calculate delay based on content length (simulate reading + typing speed)
+        let charCount = 80; // default fallback
+        if (typeof (content as any).text === 'string') {
+            charCount = (content as any).text.length;
+        }
+        const delay = Math.min(Math.max(charCount * 60, 1500), 5000);
+
+        try { await sock.sendPresenceUpdate('composing', jid); } catch (_) {}
+        await new Promise(res => setTimeout(res, delay));
+        try { await sock.sendPresenceUpdate('paused', jid); } catch (_) {}
+
+        return sock.sendMessage(jid, content, options);
+    }
+
     private async handleIncomingMessage(uuid: string, sock: ReturnType<typeof makeWASocket>, msg: WAMessage) {
         // Read {uuid}.settings.json dynamically
         const settingsPath = path.join(DATABASE_DIR, `${uuid}.settings.json`);
@@ -321,7 +346,7 @@ export class BotManager extends EventEmitter {
                     .replace(/{kategori}/g, kategoriText || "(belum ada kategori)")
                     .replace(/{footer}/g, settings.footerText || "© 2024 WADASH Bot");
 
-                sock.sendMessage(msg.key.remoteJid!, { text: responseText });
+                await this.sendWithTyping(sock, msg.key.remoteJid!, { text: responseText });
             } else {
                 const apiResponders = readBotApiResponders(uuid);
                 const fullCommandText = typeof usedPrefix === 'string' ? usedPrefix + command : command;
@@ -349,7 +374,7 @@ export class BotManager extends EventEmitter {
 
                         if (matchedResponder.sendOption === 'text') {
                             const textOutput = await res.text();
-                            await sock.sendMessage(msg.key.remoteJid!, { text: textOutput }, { quoted: msg });
+                            await this.sendWithTyping(sock, msg.key.remoteJid!, { text: textOutput }, { quoted: msg });
                         } else if (matchedResponder.sendOption === 'media') {
                             const buffer = Buffer.from(await res.arrayBuffer());
                             const contentType = res.headers.get('content-type') || 'application/octet-stream';
@@ -410,7 +435,7 @@ export class BotManager extends EventEmitter {
                     } catch (error: any) {
                         console.error(`[API Responder] Error:`, error.message);
                         this.pushLog(uuid, `API Responder Error: ${error.message}`);
-                        await sock.sendMessage(msg.key.remoteJid!, { text: `[Error API] Gagal memuat data dari Webhook / API: ${error.message}` }, { quoted: msg });
+                        await this.sendWithTyping(sock, msg.key.remoteJid!, { text: `[Error API] Gagal memuat data dari Webhook / API: ${error.message}` }, { quoted: msg });
                     }
                 } else {
                     this.pushLog(uuid, `Unknown command: ${command}`);

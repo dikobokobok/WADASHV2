@@ -1,5 +1,6 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import makeWASocket from '@whiskeysockets/baileys';
+import { sendWithTyping } from './utils';
 
 export const command = ['owner', 'own', 'o'];
 export const category = 'general';
@@ -20,7 +21,7 @@ export async function execute(
         `TEL;type=CELL;type=VOICE;waid=${ownerNumber}:${ownerNumber}\n` +
         'END:VCARD';
 
-    await sock.sendMessage(msg.key.remoteJid!, {
+    await sendWithTyping(sock, msg.key.remoteJid!, {
         contacts: {
             displayName: ownerName,
             contacts: [{ vcard }]

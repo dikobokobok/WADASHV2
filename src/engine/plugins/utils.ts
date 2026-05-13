@@ -1,4 +1,30 @@
 import { WAMessage } from '@whiskeysockets/baileys';
+import makeWASocket from '@whiskeysockets/baileys';
+
+/**
+ * Mengirim pesan dengan simulasi mengetik seperti manusia.
+ * Menampilkan status "mengetik..." (composing) selama beberapa detik
+ * sebelum pesan dikirim. Durasi jeda dihitung dari panjang teks:
+ * ~60ms per karakter, minimal 1.5 detik, maksimal 5 detik.
+ */
+export async function sendWithTyping(
+    sock: ReturnType<typeof makeWASocket>,
+    jid: string,
+    content: Parameters<ReturnType<typeof makeWASocket>['sendMessage']>[1],
+    options?: Parameters<ReturnType<typeof makeWASocket>['sendMessage']>[2]
+) {
+    let charCount = 80; // default fallback untuk non-teks (media, kontak, dll)
+    if (typeof (content as any).text === 'string') {
+        charCount = (content as any).text.length;
+    }
+    const delay = Math.min(Math.max(charCount * 60, 1500), 5000);
+
+    try { await sock.sendPresenceUpdate('composing', jid); } catch (_) {}
+    await new Promise(res => setTimeout(res, delay));
+    try { await sock.sendPresenceUpdate('paused', jid); } catch (_) {}
+
+    return sock.sendMessage(jid, content, options);
+}
 
 /**
  * Normalisasi nomor telepon ke format internasional (e.g. 6283xxx)

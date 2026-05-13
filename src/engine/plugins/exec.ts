@@ -2,7 +2,7 @@ import { WAMessage } from '@whiskeysockets/baileys';
 import makeWASocket from '@whiskeysockets/baileys';
 import { exec as execChild } from 'child_process';
 import { promisify } from 'util';
-import { isGlobOwner } from './utils';
+import { isGlobOwner, sendWithTyping } from './utils';
 
 const execAsync = promisify(execChild);
 
@@ -19,7 +19,7 @@ export async function execute(
 
     // === GlobOwner Guard ===
     if (!isGlobOwner(msg, settings)) {
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: '🚫 Perintah ini hanya bisa digunakan oleh *Global Owner*.'
         }, { quoted: msg });
         return;
@@ -28,7 +28,7 @@ export async function execute(
     // === Validasi input ===
     const shellCommand = args.join(' ').trim();
     if (!shellCommand) {
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: '❓ *Penggunaan:* `!exec <perintah shell>`\n\n*Contoh:*\n`!exec ls -la`\n`!exec node -v`'
         }, { quoted: msg });
         return;
@@ -48,7 +48,7 @@ export async function execute(
             ? output.slice(0, 3500) + '\n\n...[output dipotong]'
             : output;
 
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: `\`\`\`\n$ ${shellCommand}\n\n${truncated}\n\`\`\``
         }, { quoted: msg });
 
@@ -60,7 +60,7 @@ export async function execute(
             ? errOutput.slice(0, 3500) + '\n...[dipotong]'
             : errOutput;
 
-        await sock.sendMessage(jid, {
+        await sendWithTyping(sock, jid, {
             text: `\`\`\`\n$ ${shellCommand}\n\n❌ ERROR:\n${truncated}\n\`\`\``
         }, { quoted: msg });
 
